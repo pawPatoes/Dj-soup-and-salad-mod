@@ -400,7 +400,7 @@ SMODS.Joker {
     pos = { x = 0, y = 0 }, 
     soul_pos = { x = 2, y = 0, extra = { x = 1, y = 0 }, skip_draw = true }, 
     unlocked = true,
-    discovered = true,
+    discovered = false,
     rarity = 4, 
     cost = 20,
     blueprint_compat = true,
