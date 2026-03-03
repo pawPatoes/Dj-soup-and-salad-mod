@@ -106,7 +106,7 @@ SMODS.current_mod.config_tab = function()
                 create_toggle({ label = '', ref_table = SMODS.Mods["DJ_Mod"].config, ref_value = 'spawn_walker', col = true, hide_label = true })
             }},
             { n = G.UIT.R, nodes = {
-                { n = G.UIT.T, config = { text = "Spawn With PLEASE CRYPTID I NEED THIS!", scale = 0.4, colour = G.C.ORANGE } },
+                { n = G.UIT.T, config = { text = "Spawn With \"vanilla\" styled joker", scale = 0.4, colour = G.C.ORANGE } },
                 create_toggle({ label = '', ref_table = SMODS.Mods["DJ_Mod"].config, ref_value = 'spawn_cry_need', col = true, hide_label = true })
             }},
             { n = G.UIT.R, nodes = {
