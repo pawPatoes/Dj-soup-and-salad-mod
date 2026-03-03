@@ -1,3 +1,4 @@
+G.sr_music_enabled = true
 ----------------------
 -- IF YOU'RE HERE TO ADD "ATLAS" FOR NEW SPRITE JOKER GO TO LAST LINE!
 -- IF YOU'RE HERE TO ADD "ATLAS" FOR NEW SPRITE JOKER GO TO LAST LINE!
@@ -20,10 +21,43 @@ SMODS.DrawStep {
         end  
     end  
 }
+SMODS.Rarity {
+    key = 'overpowered',
+    loc_txt = {
+        name = 'Overpowered'
+    },
 
+    badge_colour = HEX("081D5E"), 
+    default_weight = 0,
+}
+SMODS.Rarity {
+    key = '?',
+    loc_txt = {
+        name = '???'
+    },
+
+    badge_colour = HEX("000000"), 
+    default_weight = 0,
+}
+-- SOUND
 SMODS.Sound { key = 'get_sound', path = 'get_sound.mp3' }    
 SMODS.Sound { key = 'bruh_sound', path = 'bruh_sound.mp3' }
-SMODS.Sound({ key = "speed_sound", path = "speed_sound.mp3"})
+SMODS.Sound { key = 'balala_sound', path = 'balala.ogg' }
+-- ATLAS
+SMODS.Atlas { key = "dj_atlas", path = "stolethisfromcryptid.png", px = 71, py = 95 } -- i actually did
+SMODS.Atlas { key = "seb_atlas", path = "seb.png", px = 71, py = 95 }
+SMODS.Atlas { key = "K_atlas", path = "stolethisfromcryptidsecond.png", px = 71, py = 95 } -- i actually did the second feturing dante from the devil may cry series
+SMODS.Atlas { key = "balala_atlas",path = "balala.png", px = 71, py = 95 }
+SMODS.Atlas { key = "first_atlas",path = "first.png", px = 71, py = 95 }
+SMODS.Atlas { key = "walker_atlas", path = "walker.png", px = 71, py = 95 }
+SMODS.Atlas { key = "cryf_atlas",path = "cryf.png",px = 71,py = 95}
+SMODS.Atlas { key = "cry_atlas", path = "cry.png", px = 71, py = 95}
+SMODS.Atlas { key = "heart_atlas", path = "heart.png",px = 71, py = 95} -- thats a lot of atlases
+SMODS.Atlas { key = 'sr_atlas',path = 'sr.png', px = 71, py = 95}
+
+
+
+
 
 SMODS.current_mod.mod_icon = "Keese.png" -- idk why it wont work pls help
 
@@ -34,14 +68,10 @@ local mod_config = {
     spawn_balala = false,  
     spawn_first = false,
     spawn_walker = false,
-    spawn_cry_need = false
+    spawn_cry_need = false,
+    spawn_sr = true
 }
 
-for k, v in pairs(SMODS.current_mod.config) do 
-    mod_config[k] = v 
-end
-SMODS.current_mod.config = mod_config 
-  
 SMODS.current_mod.config_tab = function()
     return {
         n = G.UIT.ROOT,
@@ -49,50 +79,46 @@ SMODS.current_mod.config_tab = function()
         nodes = {
             { n = G.UIT.R, nodes = { { n = G.UIT.T, config = { text = "Toggle Start Items:", scale = 0.5, colour = G.C.WHITE } } } },
             
-            -- Existing Toggles
+            -- Point ref_table to SMODS.current_mod.config instead of mod_config
             { n = G.UIT.R, nodes = {
                 { n = G.UIT.T, config = { text = "Spawn With Average Cryptid Joker", scale = 0.4, colour = G.C.PURPLE } },
-                create_toggle({ label = '', ref_table = mod_config, ref_value = 'spawn_keese', col = true, hide_label = true })
+             create_toggle({ label = '', ref_table = SMODS.Mods["DJ_Mod"].config, ref_value = 'spawn_keese', col = true, hide_label = true })
             }},
             { n = G.UIT.R, nodes = {
                 { n = G.UIT.T, config = { text = "Spawn With DJ Soup & Salad Joker", scale = 0.4, colour = G.C.GREEN } },
-                create_toggle({ label = '', ref_table = mod_config, ref_value = 'spawn_sss', col = true, hide_label = true })
+                create_toggle({ label = '', ref_table = SMODS.Mods["DJ_Mod"].config, ref_value = 'spawn_sss', col = true, hide_label = true })
             }},
             { n = G.UIT.R, nodes = {
                 { n = G.UIT.T, config = { text = "Spawn With Sebastion Pressure Joker", scale = 0.4, colour = G.C.RED } },
-                create_toggle({ label = '', ref_table = mod_config, ref_value = 'spawn_seb', col = true, hide_label = true })
+                create_toggle({ label = '', ref_table = SMODS.Mods["DJ_Mod"].config, ref_value = 'spawn_seb', col = true, hide_label = true })
             }},
             { n = G.UIT.R, nodes = {
                 { n = G.UIT.T, config = { text = "Spawn With Balala the Fairies", scale = 0.4, colour = G.C.GREEN } },
-                create_toggle({ label = '', ref_table = mod_config, ref_value = 'spawn_balala', col = true, hide_label = true })
+                create_toggle({ label = '', ref_table = SMODS.Mods["DJ_Mod"].config, ref_value = 'spawn_balala', col = true, hide_label = true })
             }},
             { n = G.UIT.R, nodes = {
                 { n = G.UIT.T, config = { text = "Spawn With My First Joker", scale = 0.4, colour = G.C.BLUE } },
-                create_toggle({ label = '', ref_table = mod_config, ref_value = 'spawn_first', col = true, hide_label = true })
+                create_toggle({ label = '', ref_table = SMODS.Mods["DJ_Mod"].config, ref_value = 'spawn_first', col = true, hide_label = true })
             }},
             { n = G.UIT.R, nodes = {
                 { n = G.UIT.T, config = { text = "Spawn With New Sprite Joker", scale = 0.4, colour = G.C.PURPLE } },
-                create_toggle({ label = '', ref_table = mod_config, ref_value = 'spawn_walker', col = true, hide_label = true })
+                create_toggle({ label = '', ref_table = SMODS.Mods["DJ_Mod"].config, ref_value = 'spawn_walker', col = true, hide_label = true })
             }},
             { n = G.UIT.R, nodes = {
                 { n = G.UIT.T, config = { text = "Spawn With PLEASE CRYPTID I NEED THIS!", scale = 0.4, colour = G.C.ORANGE } },
-                create_toggle({ label = '', ref_table = mod_config, ref_value = 'spawn_cry_need', col = true, hide_label = true })
+                create_toggle({ label = '', ref_table = SMODS.Mods["DJ_Mod"].config, ref_value = 'spawn_cry_need', col = true, hide_label = true })
             }},
+                        { n = G.UIT.R, nodes = {
+                { n = G.UIT.T, config = { text = "Spawn With !sr Joker", scale = 0.4, colour = G.C.ORANGE } },
+            create_toggle({ label = '', ref_table = SMODS.Mods["DJ_Mod"].config, ref_value = 'spawn_sr', col = true, hide_label = true })
+        }},
             { n = G.UIT.R, nodes = {
-                { n = G.UIT.T, config = { text = "You are unable to spawn in with the secret joker", scale = 0.5, colour = G.C.GREEN } }
+                { n = G.UIT.T, config = { text = "You are unable to spawn in with the secret jokers", scale = 0.5, colour = G.C.GREEN } }
             }},
+
         }
     }
 end
-
-SMODS.Atlas{ key = "dj_atlas", path = "stolethisfromcryptid.png", px = 71, py = 95 } -- i actually did
-SMODS.Atlas{ key = "seb_atlas", path = "seb.png", px = 71, py = 95 }
-SMODS.Atlas{ key = "K_atlas", path = "stolethisfromcryptidsecond.png", px = 71, py = 95 } -- i actually did the second feturing dante from the devil may cry series
-SMODS.Atlas { key = "balala_atlas",path = "balala.png", px = 71, py = 95 }
-SMODS.Atlas { key = "first_atlas",path = "first.png", px = 71, py = 95 }
-SMODS.Atlas { key = "walker_atlas", path = "walker.png", px = 71, py = 95 }
-SMODS.Atlas { key = "cryf_atlas",path = "cryf.png",px = 71,py = 95}
-SMODS.Atlas { key = "cry_atlas", path = "cry.png", px = 71, py = 95}
 
 
 SMODS.Joker { -- go my mult
@@ -151,7 +177,8 @@ SMODS.Joker {
         name = 'Sebastion Pressure',    
         text = { "{C:red}PLEASE GET OUT OF MY {C:attention}shop{}",
          "{C:red}IN LESS THAN {C:attention}3 SECONDS{}",
-          "{C:green}and i'll give u mult :D{}",
+          "{C:green}and i'll gain {X:mult,C:white}0.5X{} mult :D{}",
+          "{C:red}Resets{} on miss!",
            "{C:green}(Currently {X:mult,C:white}X#1# {C:green} Mult)",
            "{C:inactive,s=0.8}GET OUT!"
         }    
@@ -163,7 +190,7 @@ SMODS.Joker {
         if G.STATE == G.STATES.SHOP then   -- idk what this means documentation my goat     
             if not card.ability.extra.in_shop then card.ability.extra.in_shop = true card.ability.extra.timer = love.timer.getTime() end    
         else    
-            if card.ability.extra.in_shop then   -- i want it to play a sound but idk how maybe tommorow   
+            if card.ability.extra.in_shop then   
                 local time_spent = love.timer.getTime() - card.ability.extra.timer    
                 if time_spent < 3 then    
                     card.ability.extra.x_mult = card.ability.extra.x_mult + 0.5    
@@ -183,14 +210,14 @@ SMODS.Joker {
 
 SMODS.Joker {
     key = 'average_cryptid', -- absolute peak
-    atlas = 'K_atlas', pos = { x = 0, y = 0 }, soul_pos = { x = 1, y = 0 }, rarity = 4, cost = 20, unlocked = true, discovered = true, blueprint_compat = true, -- cryptid my goat
-    loc_txt = { name = 'Average Cryptid Joker', text = { "{C:green}I LOVE {C:blue}JOLLY JOKERS{} I WILL GIVE U", "THE {X:purple,C:white}^999{} {C:red}MULT{} IF U HAVE ONE!", "{C:inactive,s=0.8}This is true right? (Uncompatible with \"Increase joker values\" jokers)" } },
+    atlas = 'K_atlas', pos = { x = 0, y = 0 }, soul_pos = { x = 1, y = 0 }, rarity = "DJ_overpowered", cost = 20, unlocked = true, discovered = true, blueprint_compat = true, -- cryptid my goat
+    loc_txt = { name = 'Average Cryptid Joker', text = { "{C:green}I LOVE {C:blue}JOLLY JOKERS{} I WILL GIVE U", "{X:purple,C:white}^15{} {C:red}MULT{} IF U HAVE ONE!", "{C:inactive,s=0.8}This is true right? (Uncompatible with \"Increase joker values\" jokers)" } },
     in_pool = function(self, args) return false end,
     calculate = function(self, card, context)
         if context.joker_main then
             local has_jolly = false
             for _, v in ipairs(G.jokers.cards) do if v.config.center.key == 'j_jolly' then has_jolly = true break end end
-            if has_jolly then return { message = '^999!', Emult_mod = 999, colour = G.C.PURPLE } end -- cryptid frfr
+            if has_jolly then return { message = '^15!', Emult_mod = 15, colour = G.C.PURPLE } end -- cryptid frfr
         end
     end
 }
@@ -215,6 +242,7 @@ end,
         if context.joker_main and G.GAME.blind.boss then
             return {
                 x_mult = card.ability.extra.x_mult,
+                play_sound('DJ_balala_sound', 1, 5)
             }
         end
     end
@@ -234,11 +262,11 @@ SMODS.Joker {
     loc_vars = function(self, info_queue, card)
         return { vars = { card.ability.extra.exponent } }
     end,
-    rarity = 4,
+    rarity = "DJ_overpowered",
     atlas = 'first_atlas',
     pos = { x = 0, y = 0 },      
     soul_pos = { x = 1, y = 0 }, 
-    cost = 10,
+    cost = 25,
     blueprint_compat = true,
     unlocked = true,
     discovered = true,
@@ -255,7 +283,7 @@ SMODS.Joker {
 
         if context.after and not context.blueprint then
             local old_money = math.max(1, G.GAME.dollars)
-            local new_money = math.floor(old_money ^ card.ability.extra.exponent)
+            local new_money = math.floor(old_money ^ 5)
             
             if new_money > G.GAME.dollars then
                 ease_dollars(new_money - G.GAME.dollars)
@@ -330,27 +358,25 @@ SMODS.Joker {
 SMODS.Joker {
     key = 'cry_need',
     loc_txt = {
-        name = 'PLEASE CRYPTID I NEED THIS!',
+        name = '\"Vanilla\" Styled joker',
         text = {
-            "{C:green}#1# in #2#{} chance to {C:attention}install Cryptid{}",
+            "{C:green}#1# in #2#{} chance to {C:attention}\"install\" Cryptid{}",
             "when {C:attention}Blind{} is selected",
             "{C:inactive}(Self-destructs on success)",
             "{C:inactive,s:0.8}Balatro but 1% chance to install cryptid:"
         }
     },
-    config = { extra = { chance = 100, stored_win = false } }, 
+    config = { extra = { chance = 50, stored_win = false } }, 
     rarity = 2, 
     atlas = 'cryf_atlas',
     pos = { x = 0, y = 0 },
     soul_pos = { x = 2, y = 0, extra = { x = 1, y = 0 } }, 
-    cost = 1,
+    cost = 5,
     unlocked = true,
     discovered = true,
     blueprint_compat = false,
 
-    loc_vars = function(self, info_queue, card) -- so basically if u get a win but no joker 
-        -- slots im not evil so u get 100% UNTIL
-        -- u get a joker slot
+    loc_vars = function(self, info_queue, card) 
         return { vars = { G.GAME.probabilities.normal or 1, card.ability.extra.chance } }
     end,
 
@@ -359,30 +385,44 @@ SMODS.Joker {
             local rolled_win = pseudorandom('cry_need') < G.GAME.probabilities.normal / card.ability.extra.chance
             
             if rolled_win or card.ability.extra.stored_win then
-                -- Do we have room?
+        
                 if #G.jokers.cards < G.jokers.config.card_limit then
-                    local _card = create_card('Joker', G.jokers, nil, nil, nil, nil, 'j_DJ_cry', 'mod')
+                 
+                    local quest_pool = {}
+                    for k, v in pairs(G.P_CENTERS) do
+                        if v.set == 'Joker' and v.rarity == 'DJ_?' then
+                            table.insert(quest_pool, k)
+                        end
+                    end
+
+                
+                    local chosen_key = #quest_pool > 0 and quest_pool[math.random(#quest_pool)] or 'j_joker'
+
+                  
+                    local _card = create_card('Joker', G.jokers, nil, nil, nil, nil, chosen_key, 'mod')
                     if _card then 
                         _card:add_to_deck()
                         G.jokers:emplace(_card)
+                        _card:start_materialize()
                         
-                        card:remove() 
+                     
+                        card:start_dissolve() 
                         return {
-                            message = "YOU'RE A LIER DJ!", -- he said he didnt change anything but 
-                            -- "shop" said "soup"
+                            message = "YOU'RE A LIER DJ!",
                             colour = G.C.RED,
                             attention_text = true
                         }
                     end
                 else
+                  
                     card.ability.extra.stored_win = true
                     return {
-                        message = "Make slots you littl-",
+                        message = "MAKE SLOTS (NEXT PROBABILITY GUARANTEED!)",
                         colour = G.C.RED
                     }
                 end
             else
-                -- Regular failure
+                
                 return {
                     message = "YOU'RE TRUTHFUL DJ",
                     colour = G.C.GREEN
@@ -391,28 +431,87 @@ SMODS.Joker {
         end
     end
 }
+local sr_is_playing = false
 
-
--- HELP HES TOO JOLLY, was going to use cryptids code but that didnt work out
-SMODS.Joker {
-    key = 'cry',
-    atlas = 'cry_atlas',
-    pos = { x = 0, y = 0 }, 
-    soul_pos = { x = 2, y = 0, extra = { x = 1, y = 0 }, skip_draw = true }, 
-    unlocked = true,
-    discovered = false,
-    rarity = 4, 
-    cost = 20,
-    blueprint_compat = true,
-    config = { extra = { Emult = 1, Emult_mod = 1 } },
-    loc_txt = {
-        name = 'Exponentia?',
-        text = {
+SMODS.Joker {    
+    key = 'sr',    
+    loc_txt = {    
+        name = '!sr youtube.com/watch?v=lNjVd00zKDE',    
+        text = {    
+            "Replaces {C:attention}music{} with",    
+            "{C:attention}Peak songs{} while held.",    
+            "{C:green}+1{} Joker slot.",    
+            "{C:inactive,s=0.8}!sr reference no way!"    
+        }    
+    },    
+    config = { extra = { joker_slots = 1 } },    
+    rarity = 1,     
+    cost = 0,    
+    atlas = 'sr_atlas',    
+    pos = { x = 0, y = 0 },     
+    blueprint_compat = false,    
+    discovered = true,    
+    
+    add_to_deck = function(self, card, from_debuff)  
+        if G.jokers then  
+            G.jokers.config.card_limit = G.jokers.config.card_limit + card.ability.extra.joker_slots  
+        end  
+          
+        G.E_MANAGER:add_event(Event({  
+            trigger = 'after',  
+            delay = 0.2,   
+            func = function()  
+                -- Stop any existing music first  
+                if card.sr_music_source then  
+                    card.sr_music_source:stop()  
+                end  
+                  
+                -- Use NFS to read the file data properly  
+                local sound_path = SMODS.Mods["DJ_Mod"].path .. "assets/sounds/sr.ogg"  
+                local file_data = NFS.read('data', sound_path)  
+                if file_data then  
+                    local source = love.audio.newSource(love.sound.newDecoder(file_data), "stream")  
+                    source:setVolume(0.6)  
+                    source:setLooping(true)  
+                    source:play()  
+                    card.sr_music_source = source  
+                end  
+                return true  
+            end  
+        }))  
+    end,  
+  
+    remove_from_deck = function(self, card, from_debuff)  
+        if G.jokers then  
+            G.jokers.config.card_limit = G.jokers.config.card_limit - card.ability.extra.joker_slots  
+        end  
+          
+        if card.sr_music_source then  
+            card.sr_music_source:stop()  
+            card.sr_music_source = nil  
+        end  
+    end  
+}
+-- If i do, what will the people say?? I cant remove you yet! And even if I do what about old versions? I can't wipe em all!
+SMODS.Joker { -- LET ME OUT
+    key = 'cry', -- LET ME OUT
+    atlas = 'cry_atlas', -- LET ME OUT
+    pos = { x = 0, y = 0 }, -- LET ME OUT
+    soul_pos = { x = 2, y = 0, extra = { x = 1, y = 0 }, skip_draw = true }, -- LET ME OUT
+    unlocked = true, -- LET ME OUT
+    discovered = false, -- LET ME OUT
+    rarity = "DJ_?", -- LET ME OUT
+    cost = 50, -- LET ME OUT 
+    blueprint_compat = true, -- LET ME OUT
+    config = { extra = { Emult = 1, Emult_mod = 1 } }, -- LET ME OUT
+    loc_txt = { -- LET ME OUT
+        name = 'Exponentia?', -- LET ME OUT
+        text = { -- LET ME OUT
             "Gains {X:dark_edition,C:white}^#2#{} Mult whenever a",
             "{C:attention}Jolly Joker{} is sold",
             "Creates a {C:attention}Jolly Joker{} when hand is played",
             "{C:inactive}(Currently {X:dark_edition,C:white}^#1#{C:inactive} Mult)",
-            "{C:inactive,s:0.8}Bought him off ebay, he REALLY wants to escape for some reason" 
+            "{C:red,s:1.2}WARNING: VERY UNSTABLE" 
         }
     },
 
@@ -439,6 +538,14 @@ SMODS.Joker {
     end,
 
     custom_soul_anim = function(self, card, layer)
+  
+        if not card.discovered then 
+            return 
+        end
+
+    
+        card.children.center:draw() 
+
         local low_fps_t = math.floor(G.TIMERS.REAL * 12) / 12
         local seed = math.sin(low_fps_t * 1000)
         local rotate_mod = 0.15 * math.cos(low_fps_t * 43)
@@ -451,10 +558,8 @@ SMODS.Joker {
             card.custom_extra_floating_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, 0, 0)
         end
 
-        if card.custom_floating_sprite then
-            card.custom_floating_sprite.T.x = card.T.x
-            card.custom_floating_sprite.T.y = card.T.y
-            card.custom_floating_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, 0, rotate_mod, glitch_x, 0.1, glitch_y)
+        if card.children.floating_sprite then
+            card.children.floating_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, 0, rotate_mod, glitch_x, 0.1, glitch_y)
         end
     end,
 
@@ -463,7 +568,7 @@ SMODS.Joker {
     end,
     
     calculate = function(self, card, context)
-        -- Spawn Jolly Joker on played hand
+        -- I LOVE JOLLY
         if context.before and not context.blueprint then
             if #G.jokers.cards < G.jokers.config.card_limit then
                 local _card = create_card('Joker', G.jokers, nil, nil, nil, nil, 'j_jolly')
@@ -471,11 +576,11 @@ SMODS.Joker {
                 G.jokers:emplace(_card)
                 return { message = "I LOVE JOLLY JOKERS", colour = G.C.FILTER, card = card }
             else
-                return { message = "Make slots you littl-", colour = G.C.RED, card = card }
+                return { message = "MAKE SLOTS MAKE SLOTS MAKE SLOTS", colour = G.C.RED, card = card }
             end
         end
 
-        -- Gain ^Mult and 1/10 Suffering chance on Sell
+       
         if context.selling_card and not context.blueprint then
             if context.card.config.center.key == 'j_jolly' then
                 card.ability.extra.Emult = card.ability.extra.Emult + card.ability.extra.Emult_mod
@@ -502,42 +607,161 @@ SMODS.Joker {
         end
     end
 }
+
+
+
+
+
+
+SMODS.Consumable {  
+    key = 'the_heart',  
+    set = 'Spectral',  
+    atlas = 'heart_atlas',  
+    pos = { x = 0, y = 0 },  
+    soul_pos = {     
+        x = 1,     
+        y = 0,    
+        draw = function(card, scale_mod, rotate_mod)    
+            -- Create realistic heartbeat pattern (lub-dub with pause)  
+            local beat_time = G.TIMERS.REAL * 2.5  
+            local beat_phase = beat_time % 1  
+              
+            local heartbeat  
+            if beat_phase < 0.15 then  
+                -- First beat (lub)  
+                heartbeat = 0.15 + 0.1 * math.sin(beat_phase * math.pi / 0.15)  
+            elseif beat_phase < 0.3 then  
+                -- Second beat (dub) - slightly smaller  
+                heartbeat = 0.12 + 0.07 * math.sin((beat_phase - 0.15) * math.pi / 0.15)  
+            else  
+                -- Pause between beats  
+                heartbeat = 0.01 
+            end  
+              
+            card.children.floating_sprite:draw_shader('dissolve', nil, nil, nil,     
+                card.children.center, heartbeat, rotate_mod)  
+        end    
+    },    
+    hidden = true, -- Makes it a Soul-tier find  
+    loc_txt = {  
+        name = 'The Heart',  
+        text = {  
+            "Destroys all non-{C:attention}Eternal{} Jokers,",  
+            "spawns a random {X:dark_edition,C:white}Overpowered{}",  
+            "{C:attention}Joker{}"  
+        }  
+    },  
+   
+    can_use = function(self, card)  
+        return true 
+    end,  
+      
+    use = function(self, card, area, copier)  
+        -- Destroy all non-eternal jokers  
+        for i = #G.jokers.cards, 1, -1 do  
+            local j = G.jokers.cards[i]  
+            if not j.ability.eternal then   
+                j:start_dissolve()   
+            end  
+        end  
+  
+        
+        G.E_MANAGER:add_event(Event({  
+            trigger = 'after',   
+            delay = 0.4,   
+            func = function()  
+                local op_pool = {}  
+                for k, v in pairs(G.P_CENTERS) do  
+                    if v.set == 'Joker' and v.rarity == 'DJ_overpowered' then  
+                        table.insert(op_pool, k)  
+                    end  
+                end  
+                local chosen_key = #op_pool > 0 and op_pool[math.random(#op_pool)] or 'j_joker'  
+                local _card = create_card('Joker', G.jokers, nil, nil, nil, nil, chosen_key)  
+                _card:add_to_deck()  
+                G.jokers:emplace(_card)  
+                _card:start_materialize()  
+                return true  
+            end  
+        }))  
+    end  
+}
+
+
+
+
+
+
+
+
+
 local game_start_ref = Game.start_run
 function Game.start_run(self, args)
     game_start_ref(self, args)
-    
-    if G.GAME and G.GAME.round == 0 then
+
+   
+    if G.GAME.round == 0 then
+        local to_spawn = {
+    { val = 'spawn_keese',    key = 'j_DJ_average_cryptid' },
+    { val = 'spawn_sss',      key = 'j_DJ_dj_sss' },
+    { val = 'spawn_seb',      key = 'j_DJ_seb_pressure' },
+    { val = 'spawn_balala',   key = 'j_DJ_balala_fairies' },
+    { val = 'spawn_first',    key = 'j_DJ_my_first_joker' },
+    { val = 'spawn_walker',   key = 'j_DJ_new_sprite' },
+    { val = 'spawn_cry_need', key = 'j_DJ_cry_need' },
+    { val = 'spawn_sr',       key = 'j_DJ_sr' }
+}
+
         G.E_MANAGER:add_event(Event({
+            trigger = 'after',
+            delay = 0.5,
             func = function()
-                local dj_mod = SMODS.Mods["DJ_Mod"]
-                if not (dj_mod and dj_mod.config) then return true end 
-                
-                local conf = dj_mod.config
-                
-                local function quick_spawn(key)
-                    -- Check if already in inventory to prevent double-spawning
-                    for _, v in pairs(G.jokers.cards) do
-                        if v.config.center.key == key then return end
+     
+                local my_mod = SMODS.Mods["DJ_Mod"]
+                if my_mod and my_mod.config then
+                    for _, item in ipairs(to_spawn) do
+                        if my_mod.config[item.val] then
+                            local card = create_card('Joker', G.jokers, nil, nil, nil, nil, item.key, 'spawn')
+                            if card then
+                                card:add_to_deck()
+                                G.jokers:emplace(card)
+                                card:start_materialize()
+                            end
+                        end
                     end
-
-                    local card = create_card('Joker', G.jokers, nil, nil, nil, nil, key, 'mod')
-                    card:add_to_deck()
-                    G.jokers:emplace(card)
                 end
-
-                if conf.spawn_keese then quick_spawn('j_DJ_average_cryptid') end
-                if conf.spawn_sss then quick_spawn('j_DJ_dj_sss') end
-                if conf.spawn_seb then quick_spawn('j_DJ_seb_pressure') end
-                if conf.spawn_balala then quick_spawn('j_DJ_balala_fairies') end
-                if conf.spawn_first then quick_spawn('j_DJ_my_first_joker') end
-                if conf.spawn_walker then quick_spawn('j_DJ_new_sprite') end
-                if conf.spawn_cry_need then quick_spawn('j_DJ_cry_need') end
-
                 return true
             end
         }))
     end
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 -- put ur "atlas"es here!
 --
 --

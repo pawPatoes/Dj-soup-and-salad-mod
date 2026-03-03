@@ -2,7 +2,7 @@
   "id": "DJ_Mod",
   "name": "DJ Mod",
   "author": ["pawPatoes"],
-  "description": "Adds funny jokers including the dj soup and salad joker, also spawns you with the added jokers (Credits to cryptid code for helping me understand soul_pos)",
+  "description": "Adds funny jokers including the dj soup and salad joker, also adds config to spawn you with the added jokers (Credits to cryptid code for helping me understand soul_pos)",
   "prefix": "DJ",
   "main_file": "main.lua",
   "dependencies": [
