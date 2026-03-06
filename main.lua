@@ -22,6 +22,15 @@ SMODS.DrawStep {
     end  
 }
 SMODS.Rarity {
+    key = 'misc',
+    loc_txt = {
+        name = 'Misc.'
+    },
+
+    badge_colour = {0.25, 0.87, 0.81, 1},
+    default_weight = 1000000,
+}
+SMODS.Rarity {
     key = 'overpowered',
     loc_txt = {
         name = 'Overpowered'
@@ -44,6 +53,7 @@ SMODS.Sound { key = 'get_sound', path = 'get_sound.mp3' }
 SMODS.Sound { key = 'bruh_sound', path = 'bruh_sound.mp3' }
 SMODS.Sound { key = 'balala_sound', path = 'balala.ogg' }
 SMODS.Sound { key = "static_sound", path = "static.ogg"}
+SMODS.Sound { key = "east_sound", path = "east.ogg"}
 -- ATLAS
 SMODS.Atlas { key = "dj_atlas", path = "stolethisfromcryptid.png", px = 71, py = 95 } -- i actually did
 SMODS.Atlas { key = "seb_atlas", path = "seb.png", px = 71, py = 95 }
@@ -58,6 +68,8 @@ SMODS.Atlas { key = 'cryg_atlas',path = 'oops.png', px = 71, py = 95}
 SMODS.Atlas { key = 'sr_atlas',path = 'sr.png', px = 71, py = 95}
 SMODS.Atlas { key = "A60_atlas", path = "60.png", px = 71, py = 95, atlas_table = "ANIMATION_ATLAS", frames = 6}
 SMODS.Atlas { key = "dupe_atlas", path = "dupe.png", px = 71, py = 95}
+SMODS.Atlas { key = "east_atlas", path = "east.png", px = 71, py = 95}
+SMODS.Atlas { key = "o7_atlas", path = "o7.png", px = 71, py = 95}
 
 
 
@@ -77,6 +89,8 @@ local mod_config = {
     spawn_cryg = false,
     spawn_first= false,
     spawn_60 = false,
+    spawn_voice = false,
+    spawn_o7 = false,
 }
 
 local function dj_row(txt, val, col)
@@ -100,7 +114,7 @@ SMODS.current_mod.config_tab = function()
         config = { align = "tm", padding = 0.05, colour = G.C.BLACK }, 
         nodes = {
             { n = G.UIT.R, config = {align = "cm", padding = 0.1}, nodes = {
-                { n = G.UIT.T, config = { text = "DJ MOD SETTINGS", scale = 0.6, colour = G.C.WHITE } }
+                { n = G.UIT.T, config = { text = "SPAWN IN WITH SHIT!!!111", scale = 0.6, colour = G.C.GREEN } }
             }},
             
             { n = G.UIT.R, config = { align = "cm" }, nodes = {
@@ -111,8 +125,10 @@ SMODS.current_mod.config_tab = function()
                     dj_row("Sebastian pressure?", "spawn_seb", G.C.RED),
                     dj_row("Balala the fairies?", "spawn_balala", G.C.GREEN),
                     dj_row("A-60?", "spawn_60", G.C.RED),
+                    dj_row("DJ o7?", "spawn_o7", G.C.CHIPS),
                 }},
 
+                -- Page 2 Column
                 { n = G.UIT.C, config = { align = "tm", padding = 0.1 }, nodes = {
                     { n = G.UIT.R, config = {align = "cm", mb = 0.1}, nodes = { { n = G.UIT.T, config = { text = "--- Page 2 ---", scale = 0.35, colour = G.C.GOLD } } } },
                     dj_row("New Sprite?", "spawn_walker", G.C.PURPLE),
@@ -120,8 +136,31 @@ SMODS.current_mod.config_tab = function()
                     dj_row("\"vanilla\" styled joker?", "spawn_cry_need", G.C.BLUE), 
                     dj_row("500 oops all 6's? (its one joker)", "spawn_cryg", G.C.GREEN),
                     dj_row("My First Joker?", "spawn_first", G.C.BLUE),
+                    dj_row("MASSIVE voice crack? (VOLUME WARNING!)", "spawn_voice", G.C.RED)
                 }}
             }},
+            { n = G.UIT.R, config = { align = "cm", mt = 0.2 }, nodes = {
+                { n = G.UIT.O, config = { object = Moveable() }, nodes = {
+                    { n = G.UIT.R, config = { align = "cm", padding = 0.05 }, nodes = {
+                        { n = G.UIT.T, config = { 
+                            text = "You are unable to spawn in with ", 
+                            scale = 0.35, 
+                            colour = G.C.GREEN 
+                        } },
+                        { n = G.UIT.T, config = { 
+                            text = "???", 
+                            scale = 0.35, 
+                            shadow = true,
+                            colour = G.C.BLACK 
+                        } },
+                        { n = G.UIT.T, config = { 
+                            text = " rarity jokers", 
+                            scale = 0.35, 
+                            colour = G.C.GREEN 
+                        } }
+                    } }
+                } }
+            }}
         }
     }
 end
@@ -169,7 +208,7 @@ SMODS.Joker { -- go my mult
             
 
             if context.other_card == context.full_hand[1] then  
-                return { message = "Downgraded!", colour = G.C.RED }  
+                card:juice_up(0.1, 0.1)
             end  
         end
     end 
@@ -213,15 +252,71 @@ SMODS.Joker {
 }
 
 SMODS.Joker {
-    key = 'average_cryptid', -- absolute peak
-    atlas = 'K_atlas', pos = { x = 0, y = 0 }, soul_pos = { x = 1, y = 0 }, rarity = "DJ_overpowered", cost = 20, unlocked = true, discovered = true, blueprint_compat = true, -- cryptid my goat
-    loc_txt = { name = 'Average Cryptid Joker', text = { "{C:green}I LOVE {C:blue}JOLLY JOKERS{} I WILL GIVE U", "{X:purple,C:white}^15{} {C:red}MULT{} IF U HAVE ONE!", "{C:inactive,s=0.8}This is true right? (Uncompatible with \"Increase joker values\" jokers)" } },
+    key = 'average_cryptid', 
+    atlas = 'K_atlas', 
+    pos = { x = 0, y = 0 }, 
+    soul_pos = { x = 1, y = 0 }, 
+    rarity = "DJ_overpowered", 
+    cost = 20, 
+    unlocked = true, 
+    discovered = true, 
+    blueprint_compat = true,
+    loc_txt = { 
+        name = 'Average Cryptid Joker', 
+        text = {  
+            "Gains {X:chips,C:white}^#2#{} for every {C:attention}Jolly Joker{} you have",
+            "{C:green}1 in 2{} chance to create a",
+            "{C:attention}Jolly Joker{} at start of {C:attention}Blind{}",
+            "{C:inactive}(Currently {X:chips,C:white}^#3# {C:inactive} Chips)",
+            "{C:inactive,s:0.8}This is true right? (Compatible with \"Increase joker value\" jokers)" 
+        } 
+    },
+    
+    config = { extra = { echips_gain = 2, chance = 2, echips_base = 1 } },
+
+    loc_vars = function(self, info_queue, card)
+        local jolly_count = 0
+        if G.jokers and G.jokers.cards then
+            for _, v in ipairs(G.jokers.cards) do 
+                if v.config.center.key == 'j_jolly' then jolly_count = jolly_count + 1 end 
+            end
+        end
+        local total_display = card.ability.extra.echips_base + (jolly_count * card.ability.extra.echips_gain)
+        return { vars = { card.ability.extra.echips_base, card.ability.extra.echips_gain, total_display, card.ability.extra.chance } }
+    end,
+
     in_pool = function(self, args) return false end,
-    calculate = function(self, card, context)
+
+ calculate = function(self, card, context)
+        if context.setting_blind and not self.getting_sliced and not context.blueprint then
+            if pseudorandom('average_cryptid') < G.GAME.probabilities.normal / card.ability.extra.chance then
+                if #G.jokers.cards < G.jokers.config.card_limit then
+                    local jolly = create_card('Joker', G.jokers, nil, nil, nil, nil, 'j_jolly')
+                    jolly:add_to_deck()
+                    G.jokers:emplace(jolly)
+                    return {
+                        message = 'KEEEEEESE',
+                        colour = G.C.CHIPS
+                    }
+                end
+            end
+        end
+
+
         if context.joker_main then
-            local has_jolly = false
-            for _, v in ipairs(G.jokers.cards) do if v.config.center.key == 'j_jolly' then has_jolly = true break end end
-            if has_jolly then return { message = '^15!', Emult_mod = 15, colour = G.C.PURPLE } end -- cryptid frfr
+            local jolly_count = 0
+            for _, v in ipairs(G.jokers.cards) do 
+                if v.config.center.key == 'j_jolly' then jolly_count = jolly_count + 1 end 
+            end
+            
+            local total_echips = card.ability.extra.echips_base + (jolly_count * card.ability.extra.echips_gain)
+            
+
+            return {
+                Echips_mod = total_echips, 
+                echips = total_echips,     
+                colour = G.C.CHIPS
+            }
         end
     end
 }
@@ -258,11 +353,11 @@ SMODS.Joker {
         name = 'My First Joker',
         text = {
             "MY FIRST {C:attention}JOKER{} DO U LIKE IT?",
-            "{X:dark_edition,C:white}^#1#{} EVERYTHING!!!!!!!!!!",
+            "{X:dark_edition,C:white}^#1#{} EVERYTHING!!!!!!!!!! {C:inactive,s:0.5}Wait the sprite says ^10 tho?",
             "{C:inactive,s=0.8}Bullying goes hard (Compatible with \"Increase joker values\" jokers)"
         }
     },
-    config = { extra = { exponent = 10 } },
+    config = { extra = { exponent = 5 } },
     loc_vars = function(self, info_queue, card)
         return { vars = { card.ability.extra.exponent } }
     end,
@@ -278,9 +373,9 @@ SMODS.Joker {
     calculate = function(self, card, context)
         if context.joker_main then
             return {
-                Echips_mod = card.ability.extra.exponent,
+                echips = card.ability.extra.exponent,
                 Emult_mod = card.ability.extra.exponent,
-                message = "^10 EVERYTHING!!!!111!!",
+                message = "^5 EVERYTHING!!!!111!!",
                 colour = G.C.PURPLE
             }
         end
@@ -292,7 +387,7 @@ SMODS.Joker {
             if new_money > G.GAME.dollars then
                 ease_dollars(new_money - G.GAME.dollars)
                 return {
-                    message = "^10 Money!!11!!!!",
+                    message = "^5 Money!!!!!!",
                     colour = G.C.MONEY
                 }
             end
@@ -386,7 +481,6 @@ SMODS.Joker {
 
     calculate = function(self, card, context)
         if context.setting_blind and not context.blueprint then
-            -- Logic: Check if cryg is in the deck
             local cryg_present = false
             for _, v in ipairs(G.jokers.cards) do
                 if v.config.center.key == 'j_DJ_cryg' and not v.debuff then
@@ -394,14 +488,12 @@ SMODS.Joker {
                 end
             end
 
-            -- Roll for success OR check if cryg/stored_win guarantees it
             local rolled_win = pseudorandom('cry_need') < G.GAME.probabilities.normal / card.ability.extra.chance
             
             if rolled_win or card.ability.extra.stored_win or cryg_present then
                 if #G.jokers.cards < G.jokers.config.card_limit then
                     local quest_pool = {}
                     for k, v in pairs(G.P_CENTERS) do
-                        -- Only grabs the secret ? rarity jokers
                         if v.set == 'Joker' and v.rarity == 'DJ_?' then
                             table.insert(quest_pool, k)
                         end
@@ -415,7 +507,6 @@ SMODS.Joker {
                         G.jokers:emplace(_card)
                         _card:start_materialize()
                         
-                        -- If cryg caused this, it handles its own destruction in its own calculate function
                         card:start_dissolve() 
                         return {
                             message = "YOU'RE A LIER DJ!",
@@ -453,7 +544,7 @@ SMODS.Joker {
         }    
     },    
     config = { extra = { joker_slots = 1 } },    
-    rarity = 1,     
+    rarity = "DJ_misc",
     cost = 0,    
     atlas = 'sr_atlas',    
     pos = { x = 0, y = 0 },     
@@ -468,13 +559,12 @@ SMODS.Joker {
         G.E_MANAGER:add_event(Event({  
             trigger = 'after',  
             delay = 0.2,   
-            func = function()  
-                -- Stop any existing music first  
+            func = function()   
                 if card.sr_music_source then  
                     card.sr_music_source:stop()  
                 end  
                   
-                -- Use NFS to read the file data properly  
+  
                 local sound_path = SMODS.Mods["DJ_Mod"].path .. "assets/sounds/sr.ogg"  
                 local file_data = NFS.read('data', sound_path)  
                 if file_data then  
@@ -573,6 +663,7 @@ function SMODS.pseudorandom_probability(label, sucs, total, id)
             if not v.blueprint then 
                 v.ability.extra.Emult = v.ability.extra.Emult + v.ability.extra.Emult_mod
                 v:juice_up(0.1, 0.1)
+                return { message = "Upgrade!", colour = G.C.GREEN } 
             end
         end
     end
@@ -682,50 +773,198 @@ SMODS.Joker {
         end
     end,
 }
+-- I hEARd that you went to the eASt side...
+SMODS.Joker {
+    key = 'voice',
+    atlas = 'east_atlas',
+    pos = { x = 0, y = 0 },
+    rarity = 3,
+    cost = 6,
+    blueprint_compat = true,
+    config = { extra = { gain = 0.2 } },
+    
+    loc_txt = {
+        name = "MASSIVE Voice crack",
+        text = {
+            "Gives {X:mult,C:white} X#1# {} Mult for every",
+            "{C:attention}Registered Sound{} in this mod",
+            "{C:inactive}(Found {C:attention}#3# {C:inactive}sounds)",
+            "{C:inactive}(Currently {X:mult,C:white} X#2# {C:inactive} Mult)",
+            "{C:inactive,s:0.8}I HAVE TWO SIDES (SONG IS NOT COPYRIGHTED! {C:red,s:1.2}But i recommend putting your volume down...)",
+        }
+    },
+
+    loc_vars = function(self, info_queue, card)
+        local sound_count = 0
+        
+        for k, v in pairs(SMODS.Sound.obj_table) do
+            if k:find('^DJ_') then
+                sound_count = sound_count + 1
+            end
+        end
+
+        local current_xmult = 1 + (sound_count * card.ability.extra.gain)
+        return { vars = { card.ability.extra.gain, current_xmult, sound_count } }
+    end,
+
+add_to_deck = function(self, card)  
+    play_sound('DJ_east_sound', 1, 0.5)  
+    print("YO BRO IT PLAYING FRFR (DEBUG LINE)")   
+end,
+remove_from_deck = function(self, card, from_debuff)  
+    G.SOUND_MANAGER.channel:push({ type = 'stop' })
+    print("STOPPED ALL SOUNDS AND FOR SOME REASON BACKROUND MUSIC STAYS???")
+end,
+    calculate = function(self, card, context)  
+        if context.joker_main then
+            local sound_count = 0
+            for k, v in pairs(SMODS.Sound.obj_table) do
+                if k:find('^DJ_') then
+                    sound_count = sound_count + 1
+                end
+            end
+            
+            local total_xmult = 1 + (sound_count * card.ability.extra.gain)
+            return {
+                message = 'X' .. total_xmult,
+                Xmult_mod = total_xmult
+            }
+        end
+    end
+}
+-- o7 joker frfr
+SMODS.Joker {
+    key = 'o7',
+    atlas = 'o7_atlas', 
+    pos = { x = 0, y = 0 },
+    soul_pos = { x = 1, y = 0 },
+    rarity = 4, 
+    cost = 20, 
+    blueprint_compat = true, 
+    discovered = true,
+    loc_txt = {
+        name = 'DJ o7',
+        text = {
+            "Gives {X:chips,C:white}X#1#{} Chips for every Playing Card {C:red}destroyed{}",
+            "{C:red}1 in 20{} chance to {C:red}destroy{} each discarded card",
+            "{C:inactive}(Currently {X:chips,C:white}X#2#{C:inactive} Chips)",
+            "{C:inactive,s:0.8}You saluting is now a joker whether you like it or not"
+        }
+    },
+    config = { extra = { x_chips_gain = 0.5, x_chips = 1, chance = 20 } },
+
+    loc_vars = function(self, info_queue, card)
+        return { vars = { card.ability.extra.x_chips_gain, card.ability.extra.x_chips } }
+    end,
+
+    calculate = function(self, card, context)
+        if context.joker_main and card.ability.extra.x_chips > 1 then
+            return {
+                x_chips = card.ability.extra.x_chips,
+                colour = G.C.CHIPS,
+                card = card
+            }
+        end
+
+        if context.discard and not context.blueprint then
+            local destroyed_count = 0
+            local cards_to_dissolve = {}
+            for i = 1, #context.full_hand do
+                if pseudorandom('o7_discard') < G.GAME.probabilities.normal / card.ability.extra.chance then
+                    destroyed_count = destroyed_count + 1
+                    cards_to_dissolve[#cards_to_dissolve+1] = context.full_hand[i]
+                end
+            end
+            
+            if destroyed_count > 0 then
+                card.ability.extra.x_chips = card.ability.extra.x_chips + (card.ability.extra.x_chips_gain * destroyed_count)
+                G.E_MANAGER:add_event(Event({
+                    trigger = 'after', delay = 0.2,
+                    func = function() 
+                        card:juice_up(0.1, 0.1)
+                        card_eval_status_text(card, 'extra', nil, nil, nil, {message = 'Upgrade! X' .. card.ability.extra.x_chips, colour = G.C.CHIPS})
+                        for _, v in ipairs(cards_to_dissolve) do v:start_dissolve() end
+                        return true end 
+                }))
+            end
+        end
+        if context.remove_playing_cards and not context.blueprint then
+            local count = #context.removed
+            if count > 0 then
+                card.ability.extra.x_chips = card.ability.extra.x_chips + (card.ability.extra.x_chips_gain * count)
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        card:juice_up(0.1, 0.1)
+                        card_eval_status_text(card, 'extra', nil, nil, nil, {
+                            message = 'Upgrade! X' .. card.ability.extra.x_chips,
+                            colour = G.C.CHIPS
+                        })
+                        return true
+                    end
+                }))
+            end
+        end
+
+        if context.glass_shattered and not context.blueprint then
+            card.ability.extra.x_chips = card.ability.extra.x_chips + card.ability.extra.x_chips_gain
+            return {
+                message = 'Upgrade! X' .. card.ability.extra.x_chips,
+                colour = G.C.CHIPS,
+                card = card
+            }
+        end
+    end
+}
+
+
+
 -- NO I CANT!
-SMODS.Joker {   -- let him out 
+SMODS.Joker { -- let him out
     key = 'dupe',    
     atlas = 'dupe_atlas',    
     pos = { x = 0, y = 0 },     
     soul_pos = {   
-    x = 2, y = 0,   
-    extra = { x = 1, y = 0 },  
-    draw = function(card, scale_mod, rotate_mod)     
-        if card.custom_extra_sprite then  
-            card.custom_extra_sprite.T.x, card.custom_extra_sprite.T.y = card.T.x, card.T.y  
-            card.custom_extra_sprite.scale = card.children.center.scale  
-            card.custom_extra_sprite:draw_shader('dissolve', 0, nil, nil, card.children.center, scale_mod*0.8, rotate_mod*0.8, nil, 0.1 + 0.03*math.sin(1.8*G.TIMERS.REAL), nil, 0.6)  
-            card.custom_extra_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, scale_mod*0.8, rotate_mod*0.8)  
+        x = 2, y = 0,   
+        extra = { x = 1, y = 0 },  
+        draw = function(card, scale_mod, rotate_mod)     
+            if card.custom_extra_sprite then  
+                card.custom_extra_sprite.T.x, card.custom_extra_sprite.T.y = card.T.x, card.T.y  
+                card.custom_extra_sprite.scale = card.children.center.scale  
+                card.custom_extra_sprite:draw_shader('dissolve', 0, nil, nil, card.children.center, scale_mod*0.8, rotate_mod*0.8, nil, 0.1 + 0.03*math.sin(1.8*G.TIMERS.REAL), nil, 0.6)  
+                card.custom_extra_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, scale_mod*0.8, rotate_mod*0.8)  
+            end  
+                
+            if card.children.floating_sprite then    
+                card.children.floating_sprite:draw_shader('dissolve', 0, nil, nil, card.children.center, scale_mod, rotate_mod, nil, 0.1 + 0.03*math.sin(1.8*G.TIMERS.REAL), nil, 0.6)    
+                card.children.floating_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, scale_mod, rotate_mod)    
+            end  
         end  
-           
-        if card.children.floating_sprite then    
-            card.children.floating_sprite:draw_shader('dissolve', 0, nil, nil, card.children.center, scale_mod, rotate_mod, nil, 0.1 + 0.03*math.sin(1.8*G.TIMERS.REAL), nil, 0.6)    
-            card.children.floating_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, scale_mod, rotate_mod)    
-        end  
-    end  
-},
+    },
+    
     rarity = "DJ_?",    
     cost = 50,  
     blueprint_compat = true,    
-    config = { extra = { pow_gain = 1.5, base_pow = 1, pair_mod = 1.5 } },    
+    config = { extra = { echips_gain = 1.5, echips_base = 1, pair_mod = 1.5 } },    
     
     loc_txt = {    
         name = "Duplicare?",    
         text = { 
             "Creates a {C:dark_edition}Negative{} {C:attention}Jolly Joker{} every hand played",    
-            "Gains {X:dark_edition,C:white}^#2#{} for each {C:attention}Jolly Joker{}",
-            "Will give {C:mult}1.5X{} If played hand is a {C:attention}pair",    
-            "{C:inactive}(Currently {X:dark_edition,C:white}^#3#{C:inactive} Mult)",    
+            "Gives {X:chips,C:white}^#2#{} Chips for every {C:attention}Jolly Joker{} in joker slots",
+            "Will give {X:mult,C:white}1.5X{} as much If played hand is a {C:attention}pair",    
+            "{C:inactive}(Currently {X:dark_edition,C:white}^#3#{C:inactive} Chips)",    
             "{C:red,s:1.2}LET HIM OUT!",    
         }    
-    },     
-    set_sprites = function(self, card, front)    
+    },
+
+    set_sprites = function(self, card, front)     
         if not card.custom_extra_sprite then     
-            card.custom_extra_sprite = Sprite(card.T.x, card.T.y, card.T.w, card.T.h, G.ASSET_ATLAS[self.atlas], self.soul_pos.extra)    
+            card.custom_extra_sprite = Sprite(card.T.x, card.T.y, card.T.w, card.T.h, G.ASSET_ATLAS[self.atlas], self.soul_pos.extra)     
             card.custom_extra_sprite.role.draw_major = card    
-            card.custom_extra_sprite.custom_draw = true    
-        end    
-    end,    
+            card.custom_extra_sprite.custom_draw = true     
+        end     
+    end,
+
     loc_vars = function(self, info_queue, card)    
         local jolly_count = 0    
         if G.jokers then    
@@ -733,8 +972,10 @@ SMODS.Joker {   -- let him out
                 if v.config.center.key == 'j_jolly' then jolly_count = jolly_count + 1 end    
             end    
         end    
-        local total_pow = card.ability.extra.base_pow + (card.ability.extra.pow_gain * jolly_count)    
-        return { vars = { card.ability.extra.base_pow, card.ability.extra.pow_gain, total_pow } }    
+        local gain = (card.ability.extra and card.ability.extra.echips_gain) or 1.5
+        local base = (card.ability.extra and card.ability.extra.echips_base) or 1
+        local total_pow = base + (gain * jolly_count)    
+        return { vars = { base, gain, total_pow } }    
     end,    
     
     calculate = function(self, card, context)    
@@ -743,11 +984,12 @@ SMODS.Joker {   -- let him out
             _card:set_edition({negative = true}, true)    
             _card:add_to_deck()    
             G.jokers:emplace(_card)    
+            _card:start_materialize()
                 
-            return {     
-                message = "I HATE JOLLY JOKERS",     
-                colour = G.C.FILTER,     
-                card = card     
+            return {    
+                message = "I HATE JOLLY JOKERS",    
+                colour = G.C.FILTER,    
+                card = card    
             }    
         end    
     
@@ -758,17 +1000,19 @@ SMODS.Joker {   -- let him out
                     if v.config.center.key == 'j_jolly' then jolly_count = jolly_count + 1 end    
                 end    
             end    
-                
-            local total_pow = card.ability.extra.base_pow + (card.ability.extra.pow_gain * jolly_count)    
+            
+            local gain = (card.ability.extra and card.ability.extra.echips_gain) or 1.5
+            local base = (card.ability.extra and card.ability.extra.echips_base) or 1
+            local total_pow = base + (gain * jolly_count)    
                 
             if context.scoring_name == "Pair" then     
-                total_pow = total_pow * card.ability.extra.pair_mod    
+                total_pow = total_pow * ((card.ability.extra and card.ability.extra.pair_mod) or 1.5)    
             end    
     
-            return {     
-                message = "^" .. number_format(total_pow),     
-                Emult_mod = total_pow,     
-                colour = G.C.DARK_EDITION     
+            return {    
+                message = "^" .. number_format(total_pow),
+                echips = total_pow,
+                colour = G.C.CHIPS    
             }    
         end    
     end    
@@ -985,6 +1229,8 @@ function Game.start_run(self, args)
             { val = 'spawn_sr',       key = 'j_DJ_sr' },
             { val = 'spawn_cryg',     key = 'j_DJ_cryg' },
             { val = 'spawn_60',     key = 'j_DJ_A60' },
+            { val = 'spawn_voice',     key = 'j_DJ_voice' },
+            { val = 'spawn_o7',     key = 'j_DJ_o7' },
             
 
         }
