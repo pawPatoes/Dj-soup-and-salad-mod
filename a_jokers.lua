@@ -1,16 +1,18 @@
 local mod = DJ_mod_obj
-SMODS.Joker { -- go my mult
+SMODS.Joker {
     key = 'dj_sss',
     loc_txt = {
         name = 'DJ {C:red}soup {C:normal}& {C:green}salad',
         text = {
-            "{C:red}D{C:attention}J{} gains {X:mult,C:white}X#2#{} Mult per {C:blue}hand played{},",
-            "Loses {X:mult,C:white}X#3#{} Mult per {C:attention}card {C:red}discarded{}",
-            "Currently {X:mult,C:white}X#1# {C:normal} Mult",
-            "{C:inactive,s=0.8}The whole reason this mod exists" -- indeed
+            "Gains stats during {C:attention}Small{} and {C:attention}Big Blinds{}",
+            "Played Hand: {X:mult,C:white}-X#3#{} Mult, {X:chips,C:white}+X#4#{} Chips",
+            "Discard: {X:chips,C:white}-X#5#{} Chips, {X:mult,C:white}+X#2#{} Mult",
+            "Currently Stored: {X:mult,C:white}X#1#{} Mult, {X:chips,C:white}X#6#{} Chips",
+            "{C:red}Unleashes power for only ONE hand in Boss Blinds! {C:inactive,s:0.8}(Resets after){}",
+            "{C:inactive,s:0.8}DJ Soup and Salad's original idea with a twist!",
         }
     },
-    config = { extra = { x_mult = 1, mult_gain = 1, mult_ungain = 0.1 } },
+    config = { extra = { x_mult = 1, x_chips = 1, gain = 2, loss = 1 } },
     rarity = 4, 
     cost = 20, 
     blueprint_compat = true, 
@@ -19,32 +21,65 @@ SMODS.Joker { -- go my mult
     soul_pos = { x = 1, y = 0 }, 
     discovered = true,
 
-  
     loc_vars = function(self, info_queue, card) 
         return { vars = { 
             card.ability.extra.x_mult, 
-            card.ability.extra.mult_gain, 
-            card.ability.extra.mult_ungain 
+            card.ability.extra.gain, 
+            card.ability.extra.loss, 
+            card.ability.extra.gain, 
+            card.ability.extra.loss, 
+            card.ability.extra.x_chips 
         } } 
     end,
 
     calculate = function(self, card, context)  
         if context.joker_main then  
-            return { x_mult = card.ability.extra.x_mult }  
-        end  
+            if G.GAME.blind and G.GAME.blind.boss and (card.ability.extra.x_mult > 1 or card.ability.extra.x_chips > 1) then
+                local m = card.ability.extra.x_mult
+                local c = card.ability.extra.x_chips
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        card.ability.extra.x_mult = 1
+                        card.ability.extra.x_chips = 1
+                        card:juice_up(0.3, 0.5)
+                        return true
+                    end
+                }))
 
-        if context.before and not context.blueprint then  
-            card.ability.extra.x_mult = card.ability.extra.x_mult + card.ability.extra.mult_gain  
-            return { message = "Upgrade!", colour = G.C.MULT }  
-        end  
-
-        if context.discard and not context.blueprint then  
-            card.ability.extra.x_mult = math.max(1, card.ability.extra.x_mult - card.ability.extra.mult_ungain)  
-            
-
-            if context.other_card == context.full_hand[1] then  
-                card:juice_up(0.1, 0.1)
+                return { 
+                    x_mult = m,
+                    x_chips = c,
+                    message = "SOUP IS PEAK"
+                }  
+            end
+        end
+        if context.end_of_round and not context.blueprint and G.GAME.blind.boss then
+            card.ability.extra.x_mult = 1
+            card.ability.extra.x_chips = 1
+        end
+        local is_boss = G.GAME.blind and G.GAME.blind.boss
+        
+        if not is_boss and not context.blueprint then
+            if context.before then  
+                card.ability.extra.x_mult = math.max(1, card.ability.extra.x_mult - card.ability.extra.loss)
+                card.ability.extra.x_chips = card.ability.extra.x_chips + card.ability.extra.gain
+                return {
+                    message = "X" .. card.ability.extra.x_chips .. " Chips",
+                    colour = G.C.CHIPS,
+                    card = card
+                }  
             end  
+            if context.discard then  
+                if context.other_card == context.full_hand[#context.full_hand] then
+                    card.ability.extra.x_chips = math.max(1, card.ability.extra.x_chips - card.ability.extra.loss)
+                    card.ability.extra.x_mult = card.ability.extra.x_mult + card.ability.extra.gain
+                    return {
+                        message = "X" .. card.ability.extra.x_mult .. " Mult",
+                        colour = G.C.MULT,
+                        card = card
+                    }
+                end
+            end
         end
     end 
 }
@@ -130,7 +165,7 @@ SMODS.Joker {
                     jolly:add_to_deck()
                     G.jokers:emplace(jolly)
                     return {
-                        message = 'KEEEEEESE',
+                        message = 'IM JOLLY',
                         colour = G.C.CHIPS
                     }
                 end
