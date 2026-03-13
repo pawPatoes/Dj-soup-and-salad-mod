@@ -155,6 +155,7 @@ SMODS.Atlas { key = "tags_atlas", path = "tags.png", px = 34, py = 34}
 SMODS.Atlas { key = "cryb_atlas", path = "cryb.png", px = 71, py = 95}
 SMODS.Atlas { key = "kit_atlas", path = "kit.png", px = 95, py = 71}
 SMODS.Atlas { key = "editions_atlas",path = "editions.png",px = 71,py = 95 }
+SMODS.Atlas { key = "packs_atlas",path = "packs.png",px = 57,py = 95 }
 local items_path = mod.path .. "items/"
 local item_files = NFS.getDirectoryItems(items_path)
 

@@ -307,7 +307,7 @@ SMODS.Joker {
             local count = 0
             local mod_path = SMODS.Mods["DJ_Mod"].path
             
-            local content = NFS.read(mod_path .. "items/jokers.lua")
+            local content = NFS.read(mod_path .. "items/a_jokers.lua")
             if content then
                 for _ in string.gmatch(content, "atlas") do 
                     count = count + 1 
