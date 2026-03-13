@@ -1,12 +1,18 @@
+SMODS.Atlas({
+    key = "modicon",
+    path = "keese.png",
+    px = 32,
+    py = 32
+})
 G.sr_music_enabled = true
 local mod = SMODS.current_mod
 DJ_mod_obj = mod 
 ----------------------
--- IF YOU'RE HERE TO ADD "ATLAS" FOR NEW SPRITE JOKER GO TO LAST LINE!
--- IF YOU'RE HERE TO ADD "ATLAS" FOR NEW SPRITE JOKER GO TO LAST LINE!
--- IF YOU'RE HERE TO ADD "ATLAS" FOR NEW SPRITE JOKER GO TO LAST LINE!
--- IF YOU'RE HERE TO ADD "ATLAS" FOR NEW SPRITE JOKER GO TO LAST LINE!
--- IF YOU'RE HERE TO ADD "ATLAS" FOR NEW SPRITE JOKER GO TO LAST LINE!
+-- IF YOU'RE HERE TO ADD "ATLAS" FOR NEW SPRITE JOKER GO TO THE ITEMS FOLDER AND A_JOKERS.lua!
+-- IF YOU'RE HERE TO ADD "ATLAS" FOR NEW SPRITE JOKER GO TO THE ITEMS FOLDER AND A_JOKERS.lua!
+-- IF YOU'RE HERE TO ADD "ATLAS" FOR NEW SPRITE JOKER GO TO THE ITEMS FOLDER AND A_JOKERS.lua!
+-- IF YOU'RE HERE TO ADD "ATLAS" FOR NEW SPRITE JOKER GO TO THE ITEMS FOLDER AND A_JOKERS.lua!
+-- IF YOU'RE HERE TO ADD "ATLAS" FOR NEW SPRITE JOKER GO TO THE ITEMS FOLDER AND A_JOKERS.lua!
 -- Thank you for reading this :3
 if next(SMODS.find_mod("cryptid")) then
     error("CRYPTID BREAKS DJ MOD!!! DISABLE CRYPTID OR THIS MOD")
@@ -22,7 +28,7 @@ SMODS.DrawStep {
         end  
     end  
 }
-mod.mod_icon = "Keese.png"
+mod.mod_icon = "modicon"
 SMODS.ScreenShader {
     key = 'cry_glitch',
     path = 'glitch.fs',
@@ -47,6 +53,7 @@ function Game:update(dt)
         G.GAME.cry_upgrade_glitch_timer = G.GAME.cry_upgrade_glitch_timer - dt
     end
 end
+local game_update_ref = Game.update
 local original_update = G.update
 function G:update(dt)
     original_update(self, dt)
@@ -114,6 +121,7 @@ SMODS.Sound {key = "glitch_sound",path = "glitch.ogg"}
 SMODS.Sound {key = "glitch2_sound",path = "glitch2.ogg"}
 SMODS.Sound {key = "glitch3_sound",path = "glitch3.ogg"}
 SMODS.Sound {key = "flash_sound",path = "flash.ogg"}
+SMODS.Sound {key = "lightbulb_sound",path = "light.mp3"}
 -- ATLAS
 SMODS.Atlas { key = "dj_atlas", path = "stolethisfromcryptid.png", px = 71, py = 95 } -- i actually did
 SMODS.Atlas { key = "seb_atlas", path = "seb.png", px = 71, py = 95 }
@@ -137,6 +145,8 @@ SMODS.Atlas { key = "blind_atlas", path = "blind.png", px = 34, py = 34}
 SMODS.Atlas { key = "khaled_atlas", path = "kalidv.png", px = 59, py = 93}
 SMODS.Atlas { key = "tags_atlas", path = "tags.png", px = 34, py = 34}
 SMODS.Atlas { key = "cryb_atlas", path = "cryb.png", px = 71, py = 95}
+SMODS.Atlas { key = "kit_atlas", path = "kit.png", px = 95, py = 71}
+SMODS.Atlas { key = "editions_atlas",path = "editions.png",px = 71,py = 95 }
 local items_path = mod.path .. "items/"
 local item_files = NFS.getDirectoryItems(items_path)
 
@@ -239,6 +249,21 @@ function Game.start_run(self, args)
         }))
     end
 end
+-- Force the game to recognize the edition as 'discovered' 
+-- This stops card.lua:83 from looking for a nil collection entry
+local game_start_ref = Game.start
+function Game.start(self)
+    game_start_ref(self)
+    -- This marks my specific edition as discovered in the current save
+    if not G.P_CENTERS['e_DJ_blueprinted'] then 
+        -- Fallback if the key hasn't been prefixed yet
+    else
+        G.external_discoveries = G.external_discoveries or {}
+        if not G.external_discoveries['e_DJ_blueprinted'] then
+            process_discovered_planets_and_tarots('e_DJ_blueprinted')
+        end
+    end
+end
 
 
 
@@ -265,14 +290,3 @@ end
 
 
 
-
--- put ur "atlas"es here!
---
---
---
---
---
---
---
---
--- add more "--" if u need to!
