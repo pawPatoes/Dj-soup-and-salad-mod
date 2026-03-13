@@ -4,6 +4,14 @@ SMODS.Atlas({
     px = 32,
     py = 32
 })
+local card_init_ref = Card.set_ability
+local native_copy = copy_card
+function copy_card(other, new_card)
+    if other and other.seal == 'DJ_blueprinted' then
+        other.ability.seal = other.ability.seal or {}
+    end
+    return native_copy(other, new_card)
+end
 G.sr_music_enabled = true
 local mod = SMODS.current_mod
 DJ_mod_obj = mod 
