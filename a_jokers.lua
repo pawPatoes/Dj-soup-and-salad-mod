@@ -833,6 +833,7 @@ SMODS.Joker {
     cost = 8,
     blueprint_compat = true,
     display_size = { w = 95, h = 71 },
+    discovered = true,
     config = { 
         extra = { 
             x_mult = 10, 
