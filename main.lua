@@ -21,9 +21,6 @@ DJ_mod_obj = mod
 -- IF YOU'RE HERE TO ADD "ATLAS" FOR NEW SPRITE JOKER GO TO THE ITEMS FOLDER AND A_JOKERS.lua!
 -- IF YOU'RE HERE TO ADD "ATLAS" FOR NEW SPRITE JOKER GO TO THE ITEMS FOLDER AND A_JOKERS.lua!
 -- Thank you for reading this :3
-if next(SMODS.find_mod("cryptid")) then
-    error("CRYPTID BREAKS DJ MOD!!! DISABLE CRYPTID OR THIS MOD")
-end
 SMODS.DrawStep {  
     key = 'cry_soul_anim',  
     order = 60, 
@@ -109,7 +106,7 @@ SMODS.Sound {
         if G.jokers and G.jokers.cards then  
             for _, card in ipairs(G.jokers.cards) do   
                 if card:is_rarity("DJ_misc") then    
-                    return 9
+                    return 8
                 end  
             end  
         end  
@@ -130,7 +127,21 @@ SMODS.Sound {
         if G.jokers and G.jokers.cards then  
             for _, card in ipairs(G.jokers.cards) do   
                 if card:is_rarity("DJ_overpowered") then    
-                    return 10  
+                    return 9  
+                end  
+            end  
+        end  
+        return nil  
+    end  
+}
+SMODS.Sound {  
+    key = 'music_ex',  
+    path = 'music_exotic.ogg',  
+    select_music_track = function(self)   
+        if G.jokers and G.jokers.cards then  
+            for _, card in ipairs(G.jokers.cards) do   
+                if card:is_rarity("DJ_?") then    
+                    return 10 
                 end  
             end  
         end  
@@ -164,6 +175,18 @@ SMODS.Atlas { key = "cryb_atlas", path = "cryb.png", px = 71, py = 95}
 SMODS.Atlas { key = "kit_atlas", path = "kit.png", px = 95, py = 71}
 SMODS.Atlas { key = "editions_atlas",path = "editions.png",px = 71,py = 95 }
 SMODS.Atlas { key = "packs_atlas",path = "packs.png",px = 57,py = 95 }
+SMODS.Atlas { key = "cryp_atlas",path = "cryp.png",px = 71,py = 95 }
+SMODS.Atlas { key = "place_atlas",path = "place.png",px = 71,py = 95 }
+local get_edition_ref = get_edition
+function get_edition(_args)
+    local edition = get_edition_ref(_args)
+    if G.GAME.dj_negative_boost and not edition then
+        if pseudorandom('dj_edition') < G.GAME.probabilities.normal * G.GAME.dj_negative_boost / 50 then
+            return {negative = true}
+        end
+    end
+    return edition
+end
 
 
 
