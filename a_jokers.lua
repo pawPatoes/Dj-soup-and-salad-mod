@@ -792,6 +792,8 @@ SMODS.Joker {
         }
     },
     loc_vars = function(self, info_queue, card)
+        info_queue[#info_queue+1] = G.P_CENTERS['c_DJ_new_song']
+        info_queue[#info_queue+1] = G.P_CENTERS['c_DJ_the_heart']
         local extra = (card and card.ability and card.ability.extra) or self.config.extra
         return { 
             vars = { 
