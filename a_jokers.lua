@@ -416,8 +416,6 @@ SMODS.Joker {
         end
     end
 }
-local sr_is_playing = false
-
 SMODS.Joker {    
     key = 'sr',    
     loc_txt = {    
@@ -435,31 +433,17 @@ SMODS.Joker {
     atlas = 'sr_atlas',    
     pos = { x = 0, y = 0 },     
     blueprint_compat = false,    
-    discovered = true,    
-    add_to_deck = function(self, card, from_debuff)    
-    if G.jokers then    
-        G.jokers.config.card_limit = G.jokers.config.card_limit + card.ability.extra.joker_slots  
-        G.dj_music_active = true  
-    end    
-      
-    G.E_MANAGER:add_event(Event({    
-        trigger = 'after',    
-        delay = 0.2,     
-        func = function()       
-            play_sound("DJ_sr_sound", 1, 1)  
-            return true  
-        end    
-    }))  
+    discovered = true,     
+    add_to_deck = function(self, card)
+        if G.jokers then    
+            G.jokers.config.card_limit = G.jokers.config.card_limit + card.ability.extra.joker_slots 
+        end
     end,
-  
-    remove_from_deck = function(self, card, from_debuff)  
-        if G.jokers then  
+    remove_from_deck = function(self, card)
+        if G.jokers then
             G.jokers.config.card_limit = G.jokers.config.card_limit - card.ability.extra.joker_slots
-            G.SOUND_MANAGER.channel:push({type = 'stop'})
-            G.dj_music_active = false
-
-        end  
-    end  
+        end
+    end
 }
 
 
@@ -675,7 +659,7 @@ SMODS.Joker {
             "{C:attention}Registered Sound{} in this mod",
             "{C:inactive}(Found {C:attention}#3# {C:inactive}sounds)",
             "{C:inactive}(Currently {X:mult,C:white} X#2# {C:inactive} Mult)",
-            "{C:inactive,s:0.8}I HAVE TWO SIDES (SONG IS NOT COPYRIGHTED! {C:red,s:1.2}But i recommend putting your volume down...)",
+            "{C:inactive,s:0.8}I HAVE TWO SIDES",
         }
     },
 
@@ -691,18 +675,6 @@ SMODS.Joker {
         local current_xmult = 1 + (sound_count * card.ability.extra.gain)
         return { vars = { card.ability.extra.gain, current_xmult, sound_count } }
     end,
-
-add_to_deck = function(self, card)  
-    play_sound('DJ_east_sound', 1, 0.5)
-    G.dj_music_active = true,
-    print("YO BRO IT PLAYING FRFR (DEBUG LINE)")   
-end,
-remove_from_deck = function(self, card)  
-    G.SOUND_MANAGER.channel:push({ type = 'stop' })
-    G.dj_music_active = false,
-    print("STOPPED ALL SOUNDS AND FOR SOME REASON BACKROUND MUSIC STAYS???")
-end,
-
     calculate = function(self, card, context)  
         if context.joker_main then
             local sound_count = 0
@@ -1275,7 +1247,7 @@ SMODS.Joker {
         end
     end,
 
-    add_to_deck = function(self, card, from_debuff)
+    add_to_deck = function(self, card)
         card:set_eternal(true)
     end,
 

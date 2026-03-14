@@ -12,7 +12,6 @@ function copy_card(other, new_card)
     end
     return native_copy(other, new_card)
 end
-G.sr_music_enabled = true
 local mod = SMODS.current_mod
 DJ_mod_obj = mod 
 ----------------------
@@ -63,24 +62,6 @@ function Game:update(dt)
 end
 local game_update_ref = Game.update
 local original_update = G.update
-function G:update(dt)
-    original_update(self, dt)
-
-    if not G.jokers or not G.jokers.cards then
-        if not G.dj_silenced then
-            
-            love.audio.stop()
-            
-            if G.SOUND_MANAGER and G.SOUND_MANAGER.channel then
-                G.SOUND_MANAGER.channel:push({type = 'stop'})
-            end
-
-            G.dj_silenced = true
-        end
-    else
-        G.dj_silenced = false
-    end
-end
 SMODS.Rarity {
     key = 'misc',
     loc_txt = {
@@ -120,9 +101,21 @@ SMODS.Sound { key = 'get_sound', path = 'get_sound.mp3' }
 SMODS.Sound { key = 'bruh_sound', path = 'bruh_sound.mp3' }
 SMODS.Sound { key = 'balala_sound', path = 'balala.ogg' }
 SMODS.Sound { key = "static_sound", path = "static.ogg"}
-SMODS.Sound { key = "east_sound", path = "east.ogg"}
 SMODS.Sound { key = "life_sound", path = "life.mp3"}
-SMODS.Sound { key = "sr_sound", path = "sr.ogg"}
+SMODS.Sound {  
+    key = 'sr_music',  
+    path = 'sr.ogg',  
+    select_music_track = function(self)   
+        if G.jokers and G.jokers.cards then  
+            for _, card in ipairs(G.jokers.cards) do   
+                if card:is_rarity("DJ_misc") then    
+                    return 9
+                end  
+            end  
+        end  
+        return nil  
+    end  
+}
 SMODS.Sound {key = "buzzer_sound",path = "buzzer.mp3"}
 SMODS.Sound {key = "buzzer1_sound",path = "buzzer1.mp3"}
 SMODS.Sound {key = "glitch_sound",path = "glitch.ogg"}
@@ -130,6 +123,21 @@ SMODS.Sound {key = "glitch2_sound",path = "glitch2.ogg"}
 SMODS.Sound {key = "glitch3_sound",path = "glitch3.ogg"}
 SMODS.Sound {key = "flash_sound",path = "flash.ogg"}
 SMODS.Sound {key = "lightbulb_sound",path = "light.mp3"}
+SMODS.Sound {  
+    key = 'music_op',  
+    path = 'music_op.ogg',  
+    select_music_track = function(self)   
+        if G.jokers and G.jokers.cards then  
+            for _, card in ipairs(G.jokers.cards) do   
+                if card:is_rarity("DJ_overpowered") then    
+                    return 10  
+                end  
+            end  
+        end  
+        return nil  
+    end  
+}
+
 -- ATLAS
 SMODS.Atlas { key = "dj_atlas", path = "stolethisfromcryptid.png", px = 71, py = 95 } -- i actually did
 SMODS.Atlas { key = "seb_atlas", path = "seb.png", px = 71, py = 95 }
@@ -156,6 +164,9 @@ SMODS.Atlas { key = "cryb_atlas", path = "cryb.png", px = 71, py = 95}
 SMODS.Atlas { key = "kit_atlas", path = "kit.png", px = 95, py = 71}
 SMODS.Atlas { key = "editions_atlas",path = "editions.png",px = 71,py = 95 }
 SMODS.Atlas { key = "packs_atlas",path = "packs.png",px = 57,py = 95 }
+
+
+
 local items_path = mod.path .. "items/"
 local item_files = NFS.getDirectoryItems(items_path)
 
@@ -171,48 +182,6 @@ for _, file in ipairs(item_files) do
             error(err)
         end
     end
-end
-SMODS.current_mod.config_tab = function()
-    return { 
-        n = G.UIT.ROOT, 
-        config = { align = "tm", padding = 0.1, colour = G.C.BLACK }, 
-        nodes = {
-            { n = G.UIT.R, config = {align = "cm", padding = 0.1}, nodes = {
-                { n = G.UIT.T, config = { text = "AUDIO SETTINGS", scale = 0.6, colour = G.C.GOLD } }
-            }},
-            { n = G.UIT.R, config = { align = "cm", padding = 0.2 }, nodes = {
-                UIBox_button({
-                    label = {"SILENCE VOICE CRACK"},
-                    button = "silence_crack_button",
-                    colour = G.C.RED,
-                    scale = 0.5,
-                    minw = 4,
-                    minh = 0.8
-                })
-            }},
-            { n = G.UIT.R, config = { align = "cm", mt = 0.2 }, nodes = {
-                { n = G.UIT.T, config = { 
-                    text = "SILENCES MASSIVE VOICE CRACK UNTIL RESTART", 
-                    scale = 0.3, 
-                    colour = G.C.UI.TEXT_LIGHT 
-                } }
-            }}
-        }
-    }
-end
-
-G.FUNCS.silence_crack_button = function(e)
-    SMODS.Sound:create_stop_sound("DJ_east_sound", 999)
-    if G.SOUND_MANAGER and G.SOUND_MANAGER.channel then
-         G.SOUND_MANAGER.channel:push({type = 'stop'})
-    end
-    attention_text({
-        text = "SILENCED!", 
-        scale = 0.8, 
-        hold = 0.5, 
-        colour = G.C.WHITE, 
-        align = 'cm'
-    })
 end
 local game_start_ref = Game.start_run
 function Game.start_run(self, args)
@@ -258,44 +227,3 @@ function Game.start_run(self, args)
         }))
     end
 end
--- Force the game to recognize the edition as 'discovered' 
--- This stops card.lua:83 from looking for a nil collection entry
-local game_start_ref = Game.start
-function Game.start(self)
-    game_start_ref(self)
-    -- This marks my specific edition as discovered in the current save
-    if not G.P_CENTERS['e_DJ_blueprinted'] then 
-        -- Fallback if the key hasn't been prefixed yet
-    else
-        G.external_discoveries = G.external_discoveries or {}
-        if not G.external_discoveries['e_DJ_blueprinted'] then
-            process_discovered_planets_and_tarots('e_DJ_blueprinted')
-        end
-    end
-end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
