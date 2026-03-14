@@ -188,3 +188,37 @@ SMODS.Tarot {
         }
     }
 }
+----------
+-- PLANET
+---------
+SMODS.Consumable {
+    key = 'stronghold_planet',
+    set = 'Planet',
+    name = "Eye Of Ender",
+    config = { hand_type = 'DJ_stronghold' },
+    pos = { x = 2, y = 0 },
+    atlas = 'khalid2_atlas', 
+    loc_txt = {
+        name = "Eye Of Ender",
+        text = {
+            "{S:0.8}(lvl.#1#{S:0.8}){} Upgrades",
+            "{C:attention}Stronghold{}",
+            "{C:mult}+#2#{} Mult and",
+            "{C:chips}+#3#{} Chips"
+        }
+    },
+    loc_vars = function(self, info_queue, card) 
+        local hand_key = 'DJ_stronghold'
+        local level, mult, chips = 1, 15, 40 
+        if G.GAME and G.GAME.hands and G.GAME.hands[hand_key] then
+            level = G.GAME.hands[hand_key].level
+            mult = G.GAME.hands[hand_key].l_mult
+            chips = G.GAME.hands[hand_key].l_chips
+        end
+
+        return { vars = { level, mult, chips } }
+    end,
+    use = function(self, card, area, copier)
+        level_up_hand(card, 'DJ_stronghold', nil, 1)
+    end
+}

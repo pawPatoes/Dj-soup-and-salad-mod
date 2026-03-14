@@ -139,3 +139,28 @@ SMODS.Back {
         }))
     end
 }
+SMODS.Back {
+    name = "Rock Solid",
+    key = "rock_solid",
+    atlas = "deck_atlas",
+    pos = { x = 3, y = 0 }, 
+    config = { forced_stone = true },
+    loc_txt = {
+        name = "Rock Solid",
+        text = {
+            "All cards in your {C:attention}starting deck{}",
+            "are {C:attention}Stone Cards{}",
+            "{C:inactive,s=0.8}ROFFLE REFERENCE NO WAY"
+        }
+    },
+    apply = function(self)
+        G.E_MANAGER:add_event(Event({
+            func = function()
+            for k, v in pairs(G.playing_cards) do
+            v:set_ability(G.P_CENTERS.m_stone, nil, true)
+            end
+                return true
+            end
+        }))
+    end
+}
