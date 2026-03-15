@@ -197,6 +197,7 @@ SMODS.Consumable {
     name = "Eye Of Ender",
     config = { hand_type = 'DJ_stronghold' },
     pos = { x = 2, y = 0 },
+    soul_pos = {x = 3, y = 0},
     atlas = 'khalid2_atlas', 
     loc_txt = {
         name = "Eye Of Ender",
