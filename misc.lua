@@ -4,7 +4,7 @@ SMODS.PokerHand {
     mult = 15,
     l_chips = 40,
     l_mult = 4,
-    visible = true,
+    visible = false,
     
     loc_txt = {
         name = 'Stronghold',

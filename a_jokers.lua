@@ -325,6 +325,13 @@ SMODS.Joker {
         end
     end
 }
+-- atlas
+-- atlas
+-- atlas
+-- atlas
+-- atlas
+-- atlas
+-- atlas-- atlas-- atlas-- atlas-- atlas-- atlas-- atlas-- atlas-- atlas-- atlas-- atlas-- atlas-- atlas-- atlas-- atlas-- atlas-- atlas
 -- balatro but 1% chance to install cryptid
 SMODS.Joker {
     key = 'cry_need',
@@ -941,7 +948,24 @@ SMODS.Joker {
 
 
 
--- Helper: Recursive function to find and delete .lovelyignore
+
+
+
+
+-- Global Helper: Find folder regardless of case
+function get_mod_path(target)
+    local items = love.filesystem.getDirectoryItems("Mods")
+    if not items then return nil end
+    local target_lower = target:lower()
+    for _, v in ipairs(items) do
+        if v:lower() == target_lower then
+            return "Mods/" .. v
+        end
+    end
+    return nil
+end
+
+-- The Recursive Purge function you found
 local function purge_ignores(directory)
     if not love.filesystem.getInfo(directory) then return end
     
@@ -951,59 +975,42 @@ local function purge_ignores(directory)
         local info = love.filesystem.getInfo(path)
         
         if info and info.type == 'directory' then
-            purge_ignores(path)
+            purge_ignores(path) -- Go deeper
         elseif item:lower() == ".lovelyignore" then
-            love.filesystem.remove(path)
+            love.filesystem.remove(path) -- Delete it
         end
     end
-end
-
--- Helper: Find folder regardless of case
-local function get_mod_path(target)
-    local items = love.filesystem.getDirectoryItems("Mods")
-    if not items then return nil end
-    
-    for _, v in ipairs(items) do
-        if v:lower() == target:lower() then
-            return "Mods/" .. v
-        end
-    end
-    return nil
 end
 
 SMODS.Joker {
     key = 'cryi',
     atlas = 'place_atlas',
     pos = {x = 0, y = 0},
-    config = {},
     rarity = "DJ_misc",
-    discovered = true,
     blueprint_compat = false,
+    discovered = true,
     loc_txt = {
         name = "Malicious Installer",
-        text = { "#1#" }
+        text = { "{C:red}#1#{}" }
     },
     loc_vars = function(self, info_queue, card)
-        if not G.GAME then return { vars = { "Initializing..." } } end
-
         local cryptid_path = get_mod_path("cryptid")
-        return { vars = { cryptid_path and "When blind is selected, Deactivates DJ MOD and activates cryptid (THIS IS NOT A JOKE!)" or "CRYPTID NOT FOUND! (Would install cryptid if its disabled in ur mods folder)" } }
+        local status = cryptid_path and "When Blind is selected, will remove .lovelyignore files from cryptid and add them to DJ_mod\n(AKA disable dj mod and enable cryptid (VERY BUGGY!))" or "CRYPTID MISSING!"
+        return { vars = { status } }
     end,
     calculate = function(self, card, context)
-        -- Activation trigger: Selecting a Blind
-        if context.setting_blind then
+        if context.setting_blind and not context.blueprint then
             local dj_path = get_mod_path("DJ_Mod")
             local cryptid_path = get_mod_path("cryptid")
-
-            -- 1. Add ignore to DJ_Mod
             if dj_path then
-                love.filesystem.write(dj_path .. "/.lovelyignore", "")
+                love.filesystem.write(dj_path .. "/.lovelyignore", " ")
             end
-
-            -- 2. Purge and Crash
             if cryptid_path then
                 purge_ignores(cryptid_path)
-                error("PRESS R TO EXPERIENCE CRYPTID")
+                
+                error("\n--- MOD SWAP COMPLETE ---\nCryptid .lovelyignore's DECIMATED.\nDJ_Mod disabled.\nRESTART (Press R)")
+            else
+                print("Could not find Cryptid folder.")
             end
         end
     end
@@ -1012,6 +1019,7 @@ SMODS.Joker {
     key = 'purpleprint',
     atlas = 'ourple_atlas',
     pos = {x = 0, y = 0},
+    soul_pos = {x = 1, y = 0},
     config = {},
     rarity = "DJ_misc",
     blueprint_compat = true,
@@ -1130,4 +1138,154 @@ SMODS.Joker {
             end
         end
     end
+}
+SMODS.Joker {
+    key = 'the_fortress',
+    atlas = 'fort_atlas', 
+    pos = {x = 0, y = 0},  
+    rarity = 3,            
+    cost = 8,
+    blueprint_compat = true,
+    discovered = true,
+    loc_txt = {
+        name = "The Fortress",
+        text = { 
+            "{X:mult,C:white} X#1# {} Mult if played",
+            "hand is a {C:attention}Stronghold{}",
+            "{C:green,s:0.8}Image taken from {C:chips}Cryptid!"
+        }
+    },
+    config = { extra = 2.5 },
+    loc_vars = function(self, info_queue, card)
+        return { vars = { card.ability.extra } }
+    end,
+    calculate = function(self, card, context)
+        if context.joker_main then
+            if context.scoring_name == 'DJ_stronghold' then
+                return {
+                    message = 'X' .. card.ability.extra,
+                    Xmult_mod = card.ability.extra
+                }
+            end
+        end
+    end
+}
+SMODS.Joker {
+    key = 'quadratic',
+    atlas = "pyth_atlas",
+    pos = {x = 0, y = 0},
+    soul_pos = {x = 1, y = 0},
+    rarity = "DJ_overpowered",
+    cost = 25,
+    blueprint_compat = false,
+    loc_txt = {
+        name = "Pythagoras's Theorem",
+        text = {
+            "Forces {C:blue}Chips{} and {C:red}Mult{} to {C:attention}1{}",
+            "and {C:chips}Chips{} {C:dark_edition}^{} {C:mult}Mult{} becomes the new {C:mult}Mult{}.",
+            "{C:inactive}(Score operator is now {C:dark_edition^)"
+        }
+    },
+    calculate = function(self, card, context)
+        if context.joker_main then
+            local current_chips = hand_chips
+            local current_mult = mult
+            local val = current_chips ^ current_mult
+            hand_chips = hand_chips + hand_chips
+            hand_chips = hand_chips - hand_chips
+            hand_chips = hand_chips - (hand_chips - 1)
+            mult = mult + mult
+            mult = mult - mult
+            mult = mult - (mult - 1)
+            return {
+                x_mult = val,
+                Emult_mod = 1,
+                message = 'CHIPS ^ MULT',
+                remove_default_message = true,
+                colour = G.C.IMPORTANT
+            }
+        end
+    end
+}
+SMODS.Joker {
+    key = 'multi_jimbo',
+    atlas = "jimp_atlas",
+    pos = {x = 0, y = 0},
+    soul_pos = {x = 1, y = 0},
+    rarity = 3,
+    cost = 8,
+    blueprint_compat = true,
+    config = { extra = { x_mod = 4 } },
+    discovered = true,
+    loc_txt = {
+        name = "Jimbo {C:green}+{}",
+        text = {
+            "Gives {X:mult,C:white} X#1# {} Mult"
+        }
+    },
+    loc_vars = function(self, info_queue, card)
+        return { vars = { card.ability.extra.x_mod } }
+    end,
+    calculate = function(self, card, context)
+        if context.joker_main then
+            return {
+                Emult_mod = 1,
+                message = 'X' .. card.ability.extra.x_mod,
+                x_mult = card.ability.extra.x_mod,
+                remove_default_message = true,
+                colour = G.C.MULT,
+
+            }
+        end
+    end
+}
+SMODS.Joker {
+    key = 'riceball',
+    atlas = "rice_atlas",
+    pos = {x = 0, y = 0},
+    soul_pos = {x = 1, y = 0},
+    rarity = 2, 
+    cost = 6,
+    discovered = true,
+    blueprint_compat = true,
+    config = { extra = { x_mult = 1, gain = 3 } }, 
+    loc_txt = {
+        name = "RiceBall_129",
+        text = {
+            "Gains {X:mult,C:white} X#2# {} Mult if",
+            "played hand is a {C:attention}Royal Flush{}",
+            "{C:inactive}(Currently {X:mult,C:white}X#1#{} {C:inactive}Mult)",
+            "{C:red,s:1.3}READ THE CHAT!{}" 
+        }
+    },
+    loc_vars = function(self, info_queue, card)
+        return { vars = { card.ability.extra.x_mult, card.ability.extra.gain } }
+    end,
+    calculate = function(self, card, context)
+    if context.before and not context.blueprint then
+        local has_ace = false
+        local has_ten = false
+        
+        if context.scoring_name == "Straight Flush" then
+            for k, v in ipairs(context.scoring_hand) do
+                if v:get_id() == 14 then has_ace = true end
+                if v:get_id() == 10 then has_ten = true end
+            end
+        end
+
+        if has_ace and has_ten then
+            card.ability.extra.x_mult = card.ability.extra.x_mult + card.ability.extra.gain
+            return {
+                message = "Upgraded!",
+                colour = G.C.RED,
+                card = card
+            }
+        end
+    end
+    if context.joker_main and card.ability.extra.x_mult > 1 then
+        return {
+            x_mult = card.ability.extra.x_mult
+        }
+    end
+end
 }

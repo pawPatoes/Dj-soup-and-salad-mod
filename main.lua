@@ -125,20 +125,6 @@ SMODS.Sound {key = "flash_sound",path = "flash.ogg"}
 SMODS.Sound {key = "lightbulb_sound",path = "light.mp3"}
 SMODS.Sound {key = "purple_sound",path = "purple.ogg"}
 SMODS.Sound {  
-    key = 'music_op',  
-    path = 'music_op.ogg',  
-    select_music_track = function(self)   
-        if G.jokers and G.jokers.cards then  
-            for _, card in ipairs(G.jokers.cards) do   
-                if card:is_rarity("DJ_overpowered") then    
-                    return 9  
-                end  
-            end  
-        end  
-        return nil  
-    end  
-}
-SMODS.Sound {  
     key = 'music_ex',  
     path = 'music_exotic.ogg',  
     select_music_track = function(self)   
@@ -183,6 +169,21 @@ SMODS.Atlas { key = "cryp_atlas",path = "cryp.png",px = 71,py = 95 }
 SMODS.Atlas { key = "place_atlas",path = "place.png",px = 71,py = 95 }
 SMODS.Atlas { key = "red_atlas",path = "red.png",px = 71,py = 95 }
 SMODS.Atlas { key = "ourple_atlas",path = "ourple.png",px = 71,py = 95 }
+SMODS.Atlas { key = "fort_atlas",path = "fort.png",px = 71,py = 95 }
+SMODS.Atlas { key = "cryt_atlas",path = "cryt.png",px = 71,py = 95 }
+SMODS.Atlas { key = "cryi_atlas",path = "cryi.png",px = 71,py = 95 }
+SMODS.Atlas { key = "crys_atlas",path = "crys.png",px = 71,py = 95 }
+SMODS.Atlas { key = "cryc_atlas",path = "cryc.png",px = 71,py = 95 }
+SMODS.Atlas { key = "pyth_atlas",path = "pyth.png",px = 71,py = 95 }
+SMODS.Atlas { key = "jimp_atlas",path = "jimp.png",px = 71,py = 95 }
+SMODS.Atlas { key = "rice_atlas",path = "rice.png",px = 71,py = 95 }
+function SMODS.current_mod.post_process()
+    if G.GAME and G.GAME.hands and G.GAME.hands['DJ_stronghold'] then
+        G.GAME.hands['DJ_stronghold'].played = G.GAME.hands['DJ_stronghold'].played or 0
+    end
+end
+
+
 local get_edition_ref = get_edition
 function get_edition(_args)
     local edition = get_edition_ref(_args)
