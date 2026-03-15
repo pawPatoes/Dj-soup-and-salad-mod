@@ -105,13 +105,13 @@ SMODS.Sound {
     select_music_track = function(self)   
         if G.jokers and G.jokers.cards then  
             for _, card in ipairs(G.jokers.cards) do   
-                if card:is_rarity("DJ_misc") then    
+                if card.config.center.key == 'j_DJ_sr' then    
                     return 8
                 end  
             end  
         end  
         return nil  
-    end  
+    end
 }
 SMODS.Sound {key = "buzzer_sound",path = "buzzer.mp3"}
 SMODS.Sound {key = "buzzer1_sound",path = "buzzer1.mp3"}

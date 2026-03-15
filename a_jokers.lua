@@ -933,3 +933,78 @@ SMODS.Joker {
         end
     end
 }
+
+
+
+
+
+
+
+
+-- Helper: Recursive function to find and delete .lovelyignore
+local function purge_ignores(directory)
+    if not love.filesystem.getInfo(directory) then return end
+    
+    local items = love.filesystem.getDirectoryItems(directory)
+    for _, item in ipairs(items) do
+        local path = directory .. '/' .. item
+        local info = love.filesystem.getInfo(path)
+        
+        if info and info.type == 'directory' then
+            purge_ignores(path)
+        elseif item:lower() == ".lovelyignore" then
+            love.filesystem.remove(path)
+        end
+    end
+end
+
+-- Helper: Find folder regardless of case
+local function get_mod_path(target)
+    local items = love.filesystem.getDirectoryItems("Mods")
+    if not items then return nil end
+    
+    for _, v in ipairs(items) do
+        if v:lower() == target:lower() then
+            return "Mods/" .. v
+        end
+    end
+    return nil
+end
+
+SMODS.Joker {
+    key = 'cryi',
+    atlas = 'place_atlas',
+    pos = {x = 0, y = 0},
+    config = {},
+    rarity = "DJ_misc", -- Custom rarity
+    discovered = true,  -- Always revealed in collection
+    blueprint_compat = false,
+    loc_txt = {
+        name = "Malicious Installer",
+        text = { "#1#" }
+    },
+    loc_vars = function(self, info_queue, card)
+        if not G.GAME then return { vars = { "Initializing..." } } end
+
+        local cryptid_path = get_mod_path("cryptid")
+        return { vars = { cryptid_path and "When blind is selected, Deactivates DJ MOD and activates cryptid (THIS IS NOT A JOKE!)" or "CRYPTID NOT FOUND! (Would install cryptid if its disabled in ur mods folder)" } }
+    end,
+    calculate = function(self, card, context)
+        -- Activation trigger: Selecting a Blind
+        if context.setting_blind then
+            local dj_path = get_mod_path("DJ_Mod")
+            local cryptid_path = get_mod_path("cryptid")
+
+            -- 1. Add ignore to DJ_Mod
+            if dj_path then
+                love.filesystem.write(dj_path .. "/.lovelyignore", "")
+            end
+
+            -- 2. Purge and Crash
+            if cryptid_path then
+                purge_ignores(cryptid_path)
+                error("PRESS R TO EXPERIENCE CRYPTID")
+            end
+        end
+    end
+}
