@@ -976,8 +976,8 @@ SMODS.Joker {
     atlas = 'place_atlas',
     pos = {x = 0, y = 0},
     config = {},
-    rarity = "DJ_misc", -- Custom rarity
-    discovered = true,  -- Always revealed in collection
+    rarity = "DJ_misc",
+    discovered = true,
     blueprint_compat = false,
     loc_txt = {
         name = "Malicious Installer",
@@ -1004,6 +1004,129 @@ SMODS.Joker {
             if cryptid_path then
                 purge_ignores(cryptid_path)
                 error("PRESS R TO EXPERIENCE CRYPTID")
+            end
+        end
+    end
+}
+SMODS.Joker {
+    key = 'purpleprint',
+    atlas = 'ourple_atlas',
+    pos = {x = 0, y = 0},
+    config = {},
+    rarity = "DJ_misc",
+    blueprint_compat = true,
+    discovered = true,
+    loc_txt = {
+        name = "{C:purple}PurplePrint{}",
+        text = { 
+            "Retriggers Jokers to the", 
+            "{C:attention}left{} and {C:attention}right{}",
+            "{C:inactive}Status: #1#" 
+        }
+    },
+    loc_vars = function(self, info_queue, card)
+        local l_stat, r_stat = "None", "None"
+        if G.jokers and G.jokers.cards then
+            for i = 1, #G.jokers.cards do
+                if G.jokers.cards[i] == card then
+                    local left = G.jokers.cards[i-1]
+                    local right = G.jokers.cards[i+1]
+                    if left then l_stat = left.config.center.blueprint_compat and "Compatible" or "Incompatible" end
+                    if right then r_stat = right.config.center.blueprint_compat and "Compatible" or "Incompatible" end
+                end
+            end
+        end
+        return { vars = { "L: " .. l_stat .. " / R: " .. r_stat } }
+    end,
+    draw = function(self, card, layer)
+        if layer == 'front' then card.children.front:set_role_col(G.C.PURPLE) end
+    end,
+    calculate = function(self, card, context)  
+    if context.retrigger_joker_check and not context.blueprint then  
+        for i = 1, #G.jokers.cards do  
+            if G.jokers.cards[i] == card then   
+                if context.other_card == G.jokers.cards[i-1] or context.other_card == G.jokers.cards[i+1] then  
+                    if context.other_card.config.center.blueprint_compat and not context.other_card.ability.ignore_copy then  
+                        return {  
+                            message = "Again!",  
+                            repetitions = 1,  
+                            card = card  
+                        }  
+                    end  
+                end  
+            end  
+        end  
+    end  
+end
+}
+-- 2. THE REDPRINT
+SMODS.Joker {
+    key = 'redprint',
+    atlas = 'red_atlas',
+    pos = {x = 0, y = 0},
+    config = {},
+    rarity = 3,
+    blueprint_compat = true,
+    discovered = true,
+    loc_txt = {
+        name = "{C:red}RedPrint{}",
+        text = { 
+            "Copies the Joker to the {C:attention}left{}", 
+            "{C:inactive}(Fuses with Blueprints){}",
+            "{C:inactive}Status: #1#" 
+        }
+    },
+    loc_vars = function(self, info_queue, card)
+        local status = "None"
+        if G.jokers and G.jokers.cards then
+            for i = 1, #G.jokers.cards do
+                if G.jokers.cards[i] == card then
+                    local target = G.jokers.cards[i - 1]
+                    if target then
+                        status = target.config.center.blueprint_compat and "Compatible" or "Incompatible"
+                    end
+                end
+            end
+        end
+        return { vars = { status } }
+    end,
+    draw = function(self, card, layer)
+        if layer == 'front' then card.children.front:set_role_col(G.C.RED) end
+    end,
+    calculate = function(self, card, context)
+        if context.joker_main and G.jokers and G.jokers.cards then
+            for i = 1, #G.jokers.cards do
+                if G.jokers.cards[i] == card then
+                    local target = G.jokers.cards[i - 1]
+                    if target and target.config.center.key == 'j_blueprint' and not (card.getting_sliced or target.getting_sliced) then
+                        card.getting_sliced = true; target.getting_sliced = true
+                        card:juice_up(); target:juice_up()
+                        G.E_MANAGER:add_event(Event({
+                            trigger = 'after', delay = 0.6,
+                            func = function()
+                                play_sound('DJ_purple_sound')
+                                card:remove(); target:remove()
+                                local new_card = create_card('Joker', G.jokers, nil, nil, nil, nil, 'j_DJ_purpleprint')
+                                new_card:add_to_deck(); G.jokers:emplace(new_card)
+                                return true
+                            end
+                        }))
+                        return
+                    end
+                end
+            end
+        end
+        if context.joker_main and not context.blueprint then
+            if G.jokers and G.jokers.cards then
+                for i = 1, #G.jokers.cards do
+                    if G.jokers.cards[i] == card then
+                        local target = G.jokers.cards[i - 1]
+                        if target and target.config.center.blueprint_compat and not target.ability.ignore_copy then
+                            local res = SMODS.blueprint_effect(card, target, context)
+                            if res then return res end
+                        end
+                    end
+                end
             end
         end
     end

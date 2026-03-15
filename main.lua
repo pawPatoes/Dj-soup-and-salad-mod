@@ -21,6 +21,9 @@ DJ_mod_obj = mod
 -- IF YOU'RE HERE TO ADD "ATLAS" FOR NEW SPRITE JOKER GO TO THE ITEMS FOLDER AND A_JOKERS.lua!
 -- IF YOU'RE HERE TO ADD "ATLAS" FOR NEW SPRITE JOKER GO TO THE ITEMS FOLDER AND A_JOKERS.lua!
 -- Thank you for reading this :3
+SMODS.current_mod.optional_features = {  
+    retrigger_joker = true  
+}
 SMODS.DrawStep {  
     key = 'cry_soul_anim',  
     order = 60, 
@@ -120,6 +123,7 @@ SMODS.Sound {key = "glitch2_sound",path = "glitch2.ogg"}
 SMODS.Sound {key = "glitch3_sound",path = "glitch3.ogg"}
 SMODS.Sound {key = "flash_sound",path = "flash.ogg"}
 SMODS.Sound {key = "lightbulb_sound",path = "light.mp3"}
+SMODS.Sound {key = "purple_sound",path = "purple.ogg"}
 SMODS.Sound {  
     key = 'music_op',  
     path = 'music_op.ogg',  
@@ -177,6 +181,8 @@ SMODS.Atlas { key = "editions_atlas",path = "editions.png",px = 71,py = 95 }
 SMODS.Atlas { key = "packs_atlas",path = "packs.png",px = 57,py = 95 }
 SMODS.Atlas { key = "cryp_atlas",path = "cryp.png",px = 71,py = 95 }
 SMODS.Atlas { key = "place_atlas",path = "place.png",px = 71,py = 95 }
+SMODS.Atlas { key = "red_atlas",path = "red.png",px = 71,py = 95 }
+SMODS.Atlas { key = "ourple_atlas",path = "ourple.png",px = 71,py = 95 }
 local get_edition_ref = get_edition
 function get_edition(_args)
     local edition = get_edition_ref(_args)
