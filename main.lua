@@ -24,6 +24,9 @@ DJ_mod_obj = mod
 SMODS.current_mod.optional_features = {  
     retrigger_joker = true  
 }
+SMODS.current_mod.config = {
+    play_exotic_music = true
+}
 SMODS.DrawStep {  
     key = 'cry_soul_anim',  
     order = 60, 
@@ -127,10 +130,14 @@ SMODS.Sound {key = "purple_sound",path = "purple.ogg"}
 SMODS.Sound {  
     key = 'music_ex',  
     path = 'music_exotic.ogg',  
-    select_music_track = function(self)   
+    select_music_track = function(self)
+        local dj_config = SMODS.Mods['DJ_Mod'] and SMODS.Mods['DJ_Mod'].config     
+        if dj_config and not dj_config.play_exotic_music then 
+            return nil 
+        end
         if G.jokers and G.jokers.cards then  
             for _, card in ipairs(G.jokers.cards) do   
-                if card:is_rarity("DJ_?") then    
+                if card.config.center.rarity == "DJ_?" then
                     return 10 
                 end  
             end  
@@ -138,7 +145,49 @@ SMODS.Sound {
         return nil  
     end  
 }
+SMODS.load_mod_config(mod)
+local function dj_config_nodes()
+    return {
+        n = G.UIT.ROOT,
+        config = { align = "cm", padding = 0.05, colour = G.C.BLACK, r = 0.1 },
+        nodes = {
+            {
+                n = G.UIT.R,
+                config = { align = "cm", padding = 0.1 },
+                nodes = {
+                    create_toggle({
+                        label = "Play Exotic Music",
+                        ref_table = mod.config,
+                        ref_value = 'play_exotic_music',
+                        callback = function()
+                            SMODS.save_mod_config(mod)
+                        end
+                    })
+                }
+            },
+            {
+                n = G.UIT.R,
+                config = { align = "cm", padding = 0.05 },
+                nodes = {
+                    { 
+                        n = G.UIT.T, 
+                        config = { 
+                            text = "Plays the cryptid exotic joker music when a ??? rarity joker is obtained", 
+                            scale = 0.35, 
+                            colour = G.C.UI.TEXT_LIGHT 
+                        } 
+                    }
+                }
+            }
+        }
+    }
+end
+mod.config_tab = dj_config_nodes
 
+callback = function()
+    SMODS.save_mod_config(mod)
+    print("DJ Mod: Settings Saved!")
+end
 -- ATLAS
 SMODS.Atlas { key = "dj_atlas", path = "stolethisfromcryptid.png", px = 71, py = 95 } -- i actually did
 SMODS.Atlas { key = "seb_atlas", path = "seb.png", px = 71, py = 95 }

@@ -112,6 +112,7 @@ SMODS.Joker {
     cost = 50,
     blueprint_compat = false,
     discovered = true,
+    config = { extra = { slot_mod = 2, current_bonus = 0 } },
     loc_txt = {
         name = "Tenebris?",
         text = {
@@ -119,15 +120,46 @@ SMODS.Joker {
             "earns {C:money}$#1#{} at end of round for",
             "every {C:attention}Jolly Joker{} you have.",
             "He will create a {C:attention}Jolly Joker{} every hand.",
-            "{C:inactive}(He is giving {C:attention}+#2#{} {C:inactive}slots and {C:money}$#2#{} {C:inactive}payout)"
+            "{C:inactive}(Currently {C:attention}+#2#{} {C:inactive}slots and {C:money}$#2#{} {C:inactive}payout)"
         }
     },
-    config = { extra = { triggered_this_round = false } },
+    loc_vars = function(self, info_queue, card)
+        local jolly_count = 0
+        if G.jokers and G.jokers.cards then
+            for _, v in ipairs(G.jokers.cards) do
+                if v.config.center.key == 'j_jolly' then jolly_count = jolly_count + 1 end
+            end
+        end
+        local mod = (card.ability and card.ability.extra and card.ability.extra.slot_mod) or 2
+        return { vars = { mod, (jolly_count * mod) } }
+    end,
+    update = function(self, card, dt)
+        if G.jokers and G.jokers.cards and card.ability and card.ability.extra then
+            local jolly_count = 0
+            for _, v in ipairs(G.jokers.cards) do
+                if v.config.center.key == 'j_jolly' and not v.states.drag.is_held and not v.removed then 
+                    jolly_count = jolly_count + 1 
+                end
+            end
+
+            local expected_bonus = jolly_count * (card.ability.extra.slot_mod or 2)
+            
+            if card.ability.extra.current_bonus ~= expected_bonus then
+                local diff = expected_bonus - card.ability.extra.current_bonus
+                G.jokers.config.card_limit = G.jokers.config.card_limit + diff
+                card.ability.extra.current_bonus = expected_bonus
+            end
+        end
+    end,
+
+    remove_from_deck = function(self, card, from_debuff)
+        if card.ability and card.ability.extra then
+            G.jokers.config.card_limit = G.jokers.config.card_limit - (card.ability.extra.current_bonus or 0)
+            card.ability.extra.current_bonus = 0
+        end
+    end,
 
     calculate = function(self, card, context)
-        if context.setting_blind then
-            card.ability.extra.triggered_this_round = false
-        end
         if context.joker_main then
             G.E_MANAGER:add_event(Event({
                 func = function()
@@ -139,42 +171,16 @@ SMODS.Joker {
                 end
             }))
         end
-        if context.end_of_round and not context.repetition and not context.blueprint then
-            if card.ability.extra.triggered_this_round then return end
-            
-            local jolly_count = 0
-            local other_jokers = {}
-            
+    end,
+
+    calc_dollar_bonus = function(self, card)
+        local jolly_count = 0
+        if G.jokers then
             for _, j in ipairs(G.jokers.cards) do
-                if j.config.center.key == 'j_jolly' then
-                    jolly_count = jolly_count + 1
-                elseif j ~= card and j.config.center.rarity ~= "DJ_?" then
-                    table.insert(other_jokers, j)
-                end
-            end
-
-            local count_to_copy = math.min(jolly_count, 35)
-
-            if count_to_copy > 0 and #other_jokers > 0 then
-                card.ability.extra.triggered_this_round = true
-                
-                for i = 1, count_to_copy do
-                    local target = other_jokers[math.random(#other_jokers)]
-                    G.E_MANAGER:add_event(Event({
-                        trigger = 'after',
-                        delay = 0.2,
-                        func = function()
-                            local copy = copy_card(target, nil, nil, nil, nil)
-                            copy:set_edition({negative = true}, true)
-                            copy:add_to_deck()
-                            G.jokers:emplace(copy)
-                            copy:juice_up(0.3, 0.3)
-                            return true
-                        end
-                    }))
-                end
+                if j.config.center.key == 'j_jolly' then jolly_count = jolly_count + 1 end
             end
         end
+        return jolly_count * (card.ability.extra.slot_mod or 2)
     end
 }
 
@@ -183,95 +189,7 @@ SMODS.Joker {
 
 
 
-SMODS.Joker {
-    key = 'iterum',
-    atlas = 'cryi_atlas',
-    pos = {x = 0, y = 0},
-    soul_pos = {   
-        x = 2, y = 0,   
-        extra = { x = 1, y = 0 },  
-        draw = function(card, scale_mod, rotate_mod)     
-            if card.custom_extra_sprite then  
-                card.custom_extra_sprite.T.x, card.custom_extra_sprite.T.y = card.T.x, card.T.y  
-                card.custom_extra_sprite.scale = card.children.center.scale  
-                card.custom_extra_sprite.T.y = card.T.y + 0.05*math.sin(1.8*G.TIMERS.REAL) -- Added a little float
-                card.custom_extra_sprite:draw_shader('dissolve', 0, nil, nil, card.children.center, scale_mod*0.8, rotate_mod*0.8, nil, 0.1 + 0.03*math.sin(1.8*G.TIMERS.REAL), nil, 0.6)  
-                card.custom_extra_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, scale_mod*0.8, rotate_mod*0.8)  
-            end  
-            if card.children.floating_sprite then    
-                card.children.floating_sprite:draw_shader('dissolve', 0, nil, nil, card.children.center, scale_mod, rotate_mod, nil, 0.1 + 0.03*math.sin(1.8*G.TIMERS.REAL), nil, 0.6)    
-                card.children.floating_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, scale_mod, rotate_mod)    
-            end  
-        end  
-    },
-    set_sprites = function(self, card, front)     
-        if not card.custom_extra_sprite then     
-            card.custom_extra_sprite = Sprite(card.T.x, card.T.y, card.T.w, card.T.h, G.ASSET_ATLAS[self.atlas], self.soul_pos.extra)     
-            card.custom_extra_sprite.role.draw_major = card    
-            card.custom_extra_sprite.custom_draw = true     
-        end     
-    end,
-    rarity = "DJ_?",
-    cost = 20,
-    blueprint_compat = true,
-    discovered = true,
-    loc_txt = {
-        name = "Iterum?",
-        text = {
-            "Retriggers all cards {C:attention}once{} for",
-            "every {C:attention}Jolly Joker{} you have.",
-            "Gives {X:mult,C:white} X#1# {} Mult when a",
-            "{C:attention}playing card{} is scored.",
-            "Creates a {C:attention}Jolly Joker{} every hand.",
-            "{C:inactive,s:0.8}Random ahh bank"
-        }
-    },
-    config = { extra = { x_mult = 2 } },
-    
-    loc_vars = function(self, info_queue, card)
-        return { vars = { card.ability.extra.x_mult } }
-    end,
 
-    calculate = function(self, card, context)
-        if context.joker_main and not context.blueprint then
-            if #G.jokers.cards < G.jokers.config.card_limit then
-                local jolly = create_card('Joker', G.jokers, nil, nil, nil, nil, 'j_jolly', nil)
-                jolly:add_to_deck()
-                G.jokers:emplace(jolly)
-            else
-                return {
-                    message = 'No Room!',
-                    colour = G.C.FILTER
-                }
-            end
-        end
-        if context.individual and context.cardarea == G.play then
-            return {
-                x_mult = card.ability.extra.x_mult,
-                colour = G.C.MULT,
-                card = card
-            }
-        end
-        if (context.repetition and context.cardarea == G.play) or (context.retrigger_joker_check and not context.reprint) then
-            if not context.other_card or context.other_card ~= card then
-                local jolly_count = 0
-                for _, j in ipairs(G.jokers.cards) do
-                    if j.config.center.key == 'j_jolly' then
-                        jolly_count = jolly_count + 1
-                    end
-                end
-
-                if jolly_count > 0 then
-                    return {
-                        message = localize('k_again_ex'),
-                        repetitions = jolly_count,
-                        card = card
-                    }
-                end
-            end
-        end
-    end
-}
 
 SMODS.Joker {
     key = 'speculo',
