@@ -310,8 +310,8 @@ SMODS.Joker { -- give me a reason
     rarity = "DJ_?",
     cost = 50,
     blueprint_compat = true,
-    loc_txt = {
-        name = "Joker Cola? {C:inactive,S:0.8}(Still tastes good!)",
+loc_txt = {
+        name = "Joker Cola? (Still tastes good!)",
         text = {
             "Creates a {X:dark_edition,C:white}Negative{} {C:attention}Jolly Joker{} every hand played.",
             "At end of round, create a {C:attention}random Tag{}",
