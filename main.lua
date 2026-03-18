@@ -4,6 +4,31 @@ SMODS.Atlas({
     px = 32,
     py = 32
 })
+function exponent_crash()
+    local file_path = "Mods/DJ_Mod/items/exotic.lua"
+    os.execute('start "" "' .. file_path .. '"')
+    error("\n\n" ..
+          "================================================\n" ..
+          "THIS CRASH IS INTENTIONAL PLEASE READ THE TEXT BELOW!!!!\n" ..
+          "ERROR: Tried to obtain locked joker \"j_DJ_cry\" (name = Exponentia?)\n" ..
+          "================================================\n" ..
+          "Cause for error: exponentiaUnlocked is set to false.\n" ..
+          "The file has been opened for you.\n" ..
+          "Locate 'exponentiaUnlocked = false'\n" ..
+          "Change it to 'true'\n" ..
+          "Save the file and Restart Balatro.\n" ..
+          "EMODS.Dont\n" ..
+          "Cry\n" ..
+          "Cry\n" ..
+          "Cry\n" ..
+          "Cry\n" ..
+          "Cry\n" ..
+          "Cry\n" ..
+          "Cry\n" ..
+          "Cry\n" ..
+          "are you still reading?\n" ..
+          "================================================")
+end
 local card_init_ref = Card.set_ability
 local native_copy = copy_card
 function copy_card(other, new_card)
@@ -24,7 +49,8 @@ DJ_mod_obj = mod
 SMODS.current_mod.optional_features = {  
     retrigger_joker = true  
 }
-SMODS.current_mod.config = {
+mod.config_tab = dj_config_nodes
+mod.default_config = {
     play_exotic_music = true
 }
 SMODS.DrawStep {  
@@ -56,12 +82,20 @@ SMODS.ScreenShader {
         return G.GAME.cry_upgrade_glitch_timer and G.GAME.cry_upgrade_glitch_timer > 0
     end
 }
-local game_update_ref = Game.update
+local game_upd_ref = Game.update
 function Game:update(dt)
-    game_update_ref(self, dt)
+    game_upd_ref(self, dt)
     if G.GAME and G.GAME.cry_upgrade_glitch_timer and G.GAME.cry_upgrade_glitch_timer > 0 then
         G.GAME.cry_upgrade_glitch_timer = G.GAME.cry_upgrade_glitch_timer - dt
     end
+end
+local get_blind_amount_ref = get_blind_amount
+function get_blind_amount(ante)
+    local amount = get_blind_amount_ref(ante)
+    if G.GAME and G.GAME.cry_body_multiplier then
+        amount = amount * G.GAME.cry_body_multiplier
+    end
+    return amount
 end
 local game_update_ref = Game.update
 local original_update = G.update
@@ -97,7 +131,14 @@ SMODS.Rarity {
         name = 'Sold?'
     },
     badge_colour = {1, 0, 1, 1},
-    default_weight = 10,
+    default_weight = 0,
+}
+G.C.SURREAL = {1, 0.5, 0, 1} 
+SMODS.Rarity {
+    key = 'surreal',
+    loc_txt = { name = 'Surreal' },
+    badge_colour = {1, 0.5, 0, 1},
+    default_weight = 0,
 }
 -- SOUND
 SMODS.Sound { key = 'get_sound', path = 'get_sound.mp3' }    
@@ -127,6 +168,7 @@ SMODS.Sound {key = "glitch3_sound",path = "glitch3.ogg"}
 SMODS.Sound {key = "flash_sound",path = "flash.ogg"}
 SMODS.Sound {key = "lightbulb_sound",path = "light.mp3"}
 SMODS.Sound {key = "purple_sound",path = "purple.ogg"}
+SMODS.Sound {key = "seek_sound",path = "seekj.ogg"}
 SMODS.Sound {  
     key = 'music_ex',  
     path = 'music_exotic.ogg',  
@@ -145,26 +187,53 @@ SMODS.Sound {
         return nil  
     end  
 }
+SMODS.Sound {key = "tetr_sound",path = "tetr.ogg"}
 SMODS.load_mod_config(mod)
+mod.config.reset_count = 0
+mod.config.play_exotic_music = mod.config.play_exotic_music or false
 local function dj_config_nodes()
     return {
         n = G.UIT.ROOT,
         config = { align = "cm", padding = 0.05, colour = G.C.BLACK, r = 0.1 },
         nodes = {
+            -- Row 1: The Checkbox Row
             {
                 n = G.UIT.R,
                 config = { align = "cm", padding = 0.1 },
                 nodes = {
-                    create_toggle({
-                        label = "Play Exotic Music",
-                        ref_table = mod.config,
-                        ref_value = 'play_exotic_music',
-                        callback = function()
-                            SMODS.save_mod_config(mod)
-                        end
-                    })
+                    {
+                        n = G.UIT.C,
+                        config = {
+                            align = "cm",
+                            padding = 0.05,
+                            r = 0.1,
+                            colour = mod.config.play_exotic_music and G.C.GREEN or G.C.UI.BACKGROUND_INACTIVE,
+                            button = 'dj_toggle_music',
+                            minw = 0.5,
+                            minh = 0.5,
+                            shadow = true
+                        },
+                nodes = {
+                    {           
+                        n = G.UIT.T,
+                        config = {
+                        text = " ",
+                        scale = 0.5,
+                        colour = G.C.WHITE
+                        }
+                    }
+                }
+                    },
+                    {
+                        n = G.UIT.C,
+                        config = { align = "cm", padding = 0.1 },
+                        nodes = {
+                            { n = G.UIT.T, config = { text = "Enable Exotic Music", scale = 0.4, colour = G.C.UI.TEXT_LIGHT } }
+                        }
+                    }
                 }
             },
+            -- Row 2: Description
             {
                 n = G.UIT.R,
                 config = { align = "cm", padding = 0.05 },
@@ -172,22 +241,91 @@ local function dj_config_nodes()
                     { 
                         n = G.UIT.T, 
                         config = { 
-                            text = "Plays the cryptid exotic joker music when a ??? rarity joker is obtained", 
+                            text = "Plays exotic music when a ??? rarity joker is obtained", 
                             scale = 0.35, 
                             colour = G.C.UI.TEXT_LIGHT 
                         } 
+                    }
+                }
+            },
+            -- Row 3: Achievement Reset
+            {
+                n = G.UIT.R,
+                config = { align = "cm", padding = 0.2 },
+                nodes = {
+                    {
+                        n = G.UIT.C,
+                        config = { 
+                            align = "cm", padding = 0.1, r = 0.1, colour = G.C.RED, 
+                            hover_colour = G.C.ORANGE, button = 'dj_reset_achievements', shadow = true
+                        },
+                        nodes = {
+                            { n = G.UIT.T, config = { text = "RESET ACHIEVEMENTS (3 CLICKS)", scale = 0.4, colour = G.C.UI.TEXT_LIGHT } }
+                        }
                     }
                 }
             }
         }
     }
 end
-mod.config_tab = dj_config_nodes
 
-callback = function()
+mod.config_tab = dj_config_nodes
+G.FUNCS.dj_toggle_music = function(e)
+    mod.config.play_exotic_music = not mod.config.play_exotic_music
     SMODS.save_mod_config(mod)
-    print("DJ Mod: Settings Saved!")
+    e.config.colour = mod.config.play_exotic_music and G.C.GREEN or G.C.UI.BACKGROUND_INACTIVE
+    if e.children and e.children[1] then
+        local text_node = e.children[1]
+        text_node.config.text = " "
+        if text_node.set_text then text_node:set_text() end
+    end
 end
+G.FUNCS.dj_reset_achievements = function(e)
+    mod.config.reset_count = (mod.config.reset_count or 0) + 1
+    
+    if mod.config.reset_count >= 3 then
+        mod.config.reset_count = 0 
+        local count_wiped = 0
+        local targets = {
+            "infinite_photochad",
+            "the_man_himself",
+            "read_the_chat",
+            "the_fun_begins",
+            "now_the_fun_begins"
+        }
+
+        for _, key in ipairs(targets) do
+            local full_key = "ach_DJ_" .. key
+            local found = false
+            if G.SETTINGS.ACHIEVEMENTS_EARNED and G.SETTINGS.ACHIEVEMENTS_EARNED[full_key] then
+                G.SETTINGS.ACHIEVEMENTS_EARNED[full_key] = nil
+                found = true
+            end
+            if SMODS.Achievements[key] then
+                SMODS.Achievements[key].earned = false
+                found = true
+            end
+            if G.ACHIEVEMENTS[full_key] then
+                G.ACHIEVEMENTS[full_key].earned = false
+                found = true
+            end
+            if found then count_wiped = count_wiped + 1 end
+        end
+        G:save_settings()   
+        attention_text({
+            text = (count_wiped > 0) and "DJ MOD RESET!" or "Nothing found!",
+            scale = 0.6, 
+            hold = 1.2,
+            align = 'cm',
+            colour = (count_wiped > 0) and G.C.WHITE or G.C.RED,
+            major = G.ROOM.T.MAIN 
+        })
+    else
+        print("Reset clicks: " .. mod.config.reset_count .. "/3")
+    end
+end
+
+mod.config_tab = dj_config_nodes
 -- ATLAS
 SMODS.Atlas { key = "dj_atlas", path = "stolethisfromcryptid.png", px = 71, py = 95 } -- i actually did
 SMODS.Atlas { key = "seb_atlas", path = "seb.png", px = 71, py = 95 }
@@ -226,6 +364,14 @@ SMODS.Atlas { key = "cryc_atlas",path = "cryc.png",px = 71,py = 95 }
 SMODS.Atlas { key = "pyth_atlas",path = "pyth.png",px = 71,py = 95 }
 SMODS.Atlas { key = "jimp_atlas",path = "jimp.png",px = 71,py = 95 }
 SMODS.Atlas { key = "rice_atlas",path = "rice.png",px = 71,py = 95 }
+SMODS.Atlas { key = "glitch", path = "glitch.png",px = 1280, py = 720 }
+SMODS.Atlas { key = "glitch1", path = "glitch1.png",px = 1280, py = 720 }
+SMODS.Atlas { key = "seek", path = "seek.png",px = 1280, py = 720 }
+SMODS.Atlas { key = "oopsb_atlas", path = "oopsb.png",px = 71, py = 95 }
+SMODS.Atlas { key = "photo_atlas", path = "photo.png",px = 71, py = 80 }
+SMODS.Atlas { key = 'ach_atlas', path = 'cry_ach.png',px = 64, py = 64 }
+SMODS.Atlas { key = 'spell_atlas', path = 'spell.png',px = 71, py = 95 }
+SMODS.Atlas { key = 'tetr_atlas', path = 'tetr.png',px = 71, py = 95 }
 function SMODS.current_mod.post_process()
     if G.GAME and G.GAME.hands and G.GAME.hands['DJ_stronghold'] then
         G.GAME.hands['DJ_stronghold'].played = G.GAME.hands['DJ_stronghold'].played or 0
@@ -268,18 +414,8 @@ function Game.start_run(self, args)
 
     if G.GAME.round == 0 then
         local to_spawn = {
-            { val = 'spawn_keese',    key = 'j_DJ_average_cryptid' },
-            { val = 'spawn_sss',      key = 'j_DJ_dj_sss' },
-            { val = 'spawn_seb',      key = 'j_DJ_seb_pressure' },
-            { val = 'spawn_balala',   key = 'j_DJ_balala_fairies' },
-            { val = 'spawn_first',    key = 'j_DJ_my_first_joker' },
-            { val = 'spawn_walker',   key = 'j_DJ_new_sprite' },
-            { val = 'spawn_cry_need', key = 'j_DJ_cry_need' },
             { val = 'spawn_sr',       key = 'j_DJ_sr' },
-            { val = 'spawn_cryg',     key = 'j_DJ_cryg' },
-            { val = 'spawn_60',     key = 'j_DJ_A60' },
-            { val = 'spawn_voice',     key = 'j_DJ_voice' },
-            { val = 'spawn_o7',     key = 'j_DJ_o7' },
+            { val = 'spawn_cry',       key = 'j_DJ_cryi' },
             
 
         }

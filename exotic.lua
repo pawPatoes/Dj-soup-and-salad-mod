@@ -1,4 +1,25 @@
 local mod = SMODS.current_mod
+
+
+-- ima put this here to make sure people dont get him on accident, hes unstable as crap! 
+-- (This is what you have to change to true)
+exponentiaUnlocked = true
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 SMODS.Joker {
     key = 'cryp',
     loc_txt = {
@@ -185,7 +206,88 @@ SMODS.Joker {
 }
 
 
+SMODS.Joker {
+    key = 'cryit',
+    loc_txt = {
+        name = "Iterum?",
+        text = {
+            "Retriggers all scored cards {C:attention}1{} time",
+            "for every {C:attention}Jolly Joker{} you have",
+            "Gives {X:mult,C:white} X2 {} Mult for every scored card",
+            "Creates a {C:attention}Jolly Joker{}",
+            "at the start of every hand",
+        }
+    },
+    rarity = "DJ_?",
+    discovered = true,
+    blueprint_compat = true,
+    pos = { x = 0, y = 0 },
+    soul_pos = {   
+        x = 2, y = 0,   
+        extra = { x = 1, y = 0 },  
+        draw = function(card, scale_mod, rotate_mod)     
+            if card.custom_extra_sprite then  
+                card.custom_extra_sprite.T.x, card.custom_extra_sprite.T.y = card.T.x, card.T.y  
+                card.custom_extra_sprite.scale = card.children.center.scale  
+                card.custom_extra_sprite:draw_shader('dissolve', 0, nil, nil, card.children.center, scale_mod*0.8, rotate_mod*0.8, nil, 0.1 + 0.03*math.sin(1.8*G.TIMERS.REAL), nil, 0.6)  
+                card.custom_extra_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, scale_mod*0.8, rotate_mod*0.8)  
+            end  
+            if card.children.floating_sprite then    
+                card.children.floating_sprite:draw_shader('dissolve', 0, nil, nil, card.children.center, scale_mod, rotate_mod, nil, 0.1 + 0.03*math.sin(1.8*G.TIMERS.REAL), nil, 0.6)    
+                card.children.floating_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, scale_mod, rotate_mod)    
+            end  
+        end  
+    },
+    set_sprites = function(self, card, front)     
+        if not card.custom_extra_sprite then     
+            card.custom_extra_sprite = Sprite(card.T.x, card.T.y, card.T.w, card.T.h, G.ASSET_ATLAS[self.atlas], self.soul_pos.extra)     
+            card.custom_extra_sprite.role.draw_major = card    
+            card.custom_extra_sprite.custom_draw = true     
+        end     
+    end,
+    atlas = 'cryi_atlas',
+    cost = 50,
 
+    calculate = function(self, card, context)
+        -- 1. Create Jolly Joker (context.before)
+        if context.before and not context.blueprint then
+            if #G.jokers.cards < G.jokers.config.card_limit then
+                local new_card = create_card('Joker', G.jokers, nil, nil, nil, nil, 'j_jolly')
+                new_card:add_to_deck()
+                G.jokers:emplace(new_card)
+            end
+        end
+
+        -- 2. X2 Mult per card (context.individual)
+        if context.individual and context.cardarea == G.play then
+            return {
+                x_mult = 2,
+                card = card
+            }
+        end
+
+        -- 3. THE SMODS FIX: Retrigger Playing Cards
+        -- According to your doc, SMODS looks for 'repetition' and 'cardarea == G.play'
+        if context.repetition and context.cardarea == G.play then
+            local jolly_count = 0
+            for i = 1, #G.jokers.cards do
+                if G.jokers.cards[i].config.center.key == 'j_jolly' then
+                    jolly_count = jolly_count + 1
+                end
+            end
+
+            if jolly_count > 0 then
+                return {
+                    message = 'Again!',
+                    remove_default_message = true,
+                    repetitions = jolly_count,
+                    card = card,
+                    X_chips = 1,
+                }
+            end
+        end
+    end
+}
 
 
 
@@ -310,8 +412,9 @@ SMODS.Joker { -- give me a reason
     rarity = "DJ_?",
     cost = 50,
     blueprint_compat = true,
-loc_txt = {
-        name = "Joker Cola? (Still tastes good!)",
+    discovered = true,
+    loc_txt = {
+        name = "Joker Cola? {C:inactive}(Still tastes good!)",
         text = {
             "Creates a {X:dark_edition,C:white}Negative{} {C:attention}Jolly Joker{} every hand played.",
             "At end of round, create a {C:attention}random Tag{}",
@@ -488,8 +591,8 @@ SMODS.Joker { -- let me out
     unlocked = true, -- next update
     rarity = "DJ_?", -- now
     cost = 1000000, -- now
-    blueprint_compat = true,
-    unlocked = true,
+    blueprint_compat = true, -- shut up
+    unlocked = true, -- now
     discovered = true,
     config = { extra = { Emult = 1, Emult_mod = 1, is_broken = false } },
     loc_txt = {
@@ -505,7 +608,11 @@ SMODS.Joker { -- let me out
     loc_vars = function(self, info_queue, card)
         return { vars = { card.ability.extra.Emult, card.ability.extra.Emult_mod } }
     end,
-
+    add_to_deck = function(self, card)
+    if exponentiaUnlocked == false then
+        exponent_crash()
+    end
+    end,
     set_sprites = function(self, card, front)
         if card.children.floating_sprite then
             card.children.floating_sprite:remove()

@@ -38,7 +38,19 @@ SMODS.Consumable {
         return true 
     end,  
       
-    use = function(self, card, area, copier)    
+    use = function(self, card, area, copier)
+        check_for_unlock({type = 'dj_use_heart', card = card})
+        G.E_MANAGER:add_event(Event({
+        func = function()
+            local deck_key = 'b_DJ_w_hole_deck'
+            if G.P_CENTERS[deck_key] and not G.P_CENTERS[deck_key].unlocked then
+                G.P_CENTERS[deck_key].unlocked = true
+                unlock_card(G.P_CENTERS[deck_key]) 
+                G:save_settings()
+            end
+            return true
+        end
+        }))
         for i = #G.jokers.cards, 1, -1 do  
             local j = G.jokers.cards[i]  
             if not j.ability.eternal then   
@@ -67,7 +79,185 @@ SMODS.Consumable {
         }))  
     end  
 }
-------------
+G.EYE_GLITCH_TYPE = nil
+
+SMODS.DrawStep {
+    key = 'eye_glitch_visual',
+    order = 2000, 
+    func = function(self)
+        if G.EYE_GLITCH_TYPE and G.ASSET_ATLAS[G.EYE_GLITCH_TYPE] then
+            local atlas = G.ASSET_ATLAS[G.EYE_GLITCH_TYPE]
+            if not atlas or not atlas.image then return end
+
+            love.graphics.push('all')
+            love.graphics.origin()
+            love.graphics.setColor(1, 1, 1, 1) 
+            
+            -- --- SETTINGS ---
+            local speed = 20  -- How many "jumps" per second
+            local intensity = 0.05 -- Max jump distance (5% of screen)
+            local overscale = 1.15 -- Make image 15% bigger to hide borders
+            
+            -- 1. SNAP LOGIC
+            -- Using math.floor makes the value "step" instead of "slide"
+            local snap_t = math.floor(G.TIMERS.REAL * speed)
+            
+            -- Use the snapped time to generate a constant offset for the entire frame
+            -- Use a pseudo-random seed based on the snap_t
+            local offset_x = (math.sin(snap_t * 12.9898) * 43758.5453 % 1 - 0.5) * (love.graphics.getWidth() * intensity)
+            local offset_y = (math.sin(snap_t * 78.233) * 43758.5453 % 1 - 0.5) * (love.graphics.getHeight() * intensity)
+            
+            -- 2. CENTER & OVERSCALE
+            -- Calculate base scale to fill screen, then multiply by overscale
+            local screen_w = love.graphics.getWidth()
+            local screen_h = love.graphics.getHeight()
+            local base_scale_x = screen_w / atlas.image:getWidth()
+            local base_scale_y = screen_h / atlas.image:getHeight()
+            
+            local final_scale_x = base_scale_x * overscale
+            local final_scale_y = base_scale_y * overscale
+            
+            -- Calculate centering offset so the oversized image covers the edges
+            local center_x = (screen_w - (atlas.image:getWidth() * final_scale_x)) / 2
+            local center_y = (screen_h - (atlas.image:getHeight() * final_scale_y)) / 2
+
+            -- 3. DRAW
+            -- Add the center_x/y to the jump offset_x/y
+            love.graphics.draw(atlas.image, center_x + offset_x, center_y + offset_y, 0, 
+                final_scale_x, final_scale_y)
+                
+            love.graphics.pop()
+        end
+    end
+}
+SMODS.Consumable {
+    key = 'eye',
+    set = 'Spectral',
+    discovered = true,
+    hidden = false,
+    atlas = 'khalid2_atlas',
+    pos = { x = 4, y = 0 },
+    soul_pos = { 
+        x = 4, y = 1,
+        extra = { x = 4, y = 2 },
+        draw = function(card, scale_mod, rotate_mod)
+            local teleport_rate = 0.08 
+            local time_step = math.floor(G.TIMERS.REAL / teleport_rate)
+            math.randomseed(time_step)
+            local mdx = (math.random() - 0.5) * 0.05 
+            local mdy = (math.random() - 0.5) * 0.05     
+            if math.random() > 0.1 then
+                if card.children and card.children.floating_sprite then
+                    card.children.floating_sprite:set_sprite_pos({x = 4, y = 1})
+                    card.children.floating_sprite:draw_shader('dissolve', nil, nil, nil, 
+                        card.children.center, scale_mod, rotate_mod, mdx, mdy)
+                end
+            end
+            for i = 1, 10 do
+                local cdx = (math.random() - 0.5) * 3.2
+                local cdy = (math.random() - 0.5) * 3.2
+                if math.abs(cdx) < 0.6 then cdx = cdx * 2.0 end 
+                if math.abs(cdy) < 0.6 then cdy = cdy * 2.0 end  
+                local crot = (math.random() - 0.5) * 20      
+                if math.random() > 0.25 then
+                    if card.children and card.children.floating_sprite then
+                        card.children.floating_sprite:set_sprite_pos({x = 4, y = 2})
+                        card.children.floating_sprite:draw_shader('dissolve', nil, nil, nil, 
+                            card.children.center, scale_mod, rotate_mod + crot, cdx, cdy)
+                    end
+                end
+            end
+            card.children.floating_sprite:set_sprite_pos({x = 4, y = 1})
+            math.randomseed(os.time())
+        end
+    },
+    loc_txt = {
+        name = 'The Eye',
+        text = {
+            "Restart the run at {C:attention}Ante 1{}",
+            "{C:red}Lose all{} Jokers, Consumables, and Gold",
+            "Permanently Increase {C:attention}Blind sizes{} by a LOT",
+            "Manifest a random {C:attention}Surreal{} Joker",
+            "{C:attention}Surreal{} jokers {C:red}cannot{} be {C:red}debuffed",
+            "{C:red}(JUMPSCARE WARNING!)",
+            "{C:inactive,s:0.8}IS THAT A MAYHEM REFERENCE"
+        }
+    },
+    in_pool = function(self, args)
+        return pseudorandom('the_eye_pool') < 0.5
+    end,
+    cost = 20,
+    can_use = function(self, card) return true end,
+    use = function(self, card, area, copier)
+        check_for_unlock({type = 'dj_eye_used'})
+    G.E_MANAGER:add_event(Event({
+        func = function()
+            local deck_key = 'b_DJ_hole_deck'
+            if G.P_CENTERS[deck_key] and not G.P_CENTERS[deck_key].unlocked then
+                G.P_CENTERS[deck_key].unlocked = true
+                unlock_card(G.P_CENTERS[deck_key])
+                G:save_settings()
+            end
+            return true
+        end
+    }))
+        G.eye_prev_speed = G.SETTINGS.GAMESPEED
+        G.eye_prev_vol = G.SETTINGS.SOUND.music_volume   
+        G.GAME.cry_body_multiplier = (G.GAME.cry_body_multiplier or 1) * 350
+        G.GAME.ante = 1
+        G.GAME.round_resets.ante = 1
+        G.GAME.dollars = 4
+        for i = #G.jokers.cards, 1, -1 do G.jokers.cards[i]:remove() end
+        for i = #G.consumeables.cards, 1, -1 do G.consumeables.cards[i]:remove() end
+        G.E_MANAGER:add_event(Event({
+            trigger = 'immediate',
+            func = function()
+                G.SETTINGS.GAMESPEED = 1
+                G.SETTINGS.SOUND.music_volume = 0
+                G.EYE_GLITCH_TYPE = "DJ_seek" 
+                play_sound("DJ_seek_sound", 1, 1.5)
+                
+                return true
+            end
+        }))
+        G.E_MANAGER:add_event(Event({
+            trigger = 'after',
+            delay = 1.3, 
+            func = function()
+                G.EYE_GLITCH_TYPE = nil 
+                G.SETTINGS.GAMESPEED = G.eye_prev_speed or 1
+                G.SETTINGS.SOUND.music_volume = G.eye_prev_vol or 100
+                for k, v in pairs(G.GAME.hands) do
+                    v.level = 1
+                    v.played = 0
+                    v.mult = v.s_mult or 10
+                    v.chips = v.s_chips or 10
+                end
+                local sur_pool = {}
+                for k, v in pairs(G.P_CENTERS) do
+                    if v.set == 'Joker' and v.rarity == 'DJ_surreal' then 
+                        table.insert(sur_pool, k) 
+                    end
+                end    
+                
+                local chosen_key = #sur_pool > 0 
+                    and sur_pool[math.random(#sur_pool)] 
+                    or 'j_joker'
+                    
+                local _card = create_card('Joker', G.jokers, nil, nil, nil, nil, chosen_key, 'eye_spawn')
+                _card:add_to_deck()
+                G.jokers:emplace(_card)
+                _card:start_materialize()        
+                
+                if shake_screen then shake_screen(30, 45) end
+                G.HUD:recalculate()
+                
+                return true
+            end
+        }))
+    end
+}
+-----------
 -- TAROTS
 -----------
 SMODS.Consumable {
@@ -177,7 +367,9 @@ SMODS.Tarot {
         if SMODS.Seals and SMODS.Seals['DJ_blueprinted'] then
             info_queue[#info_queue+1] = SMODS.Seals['DJ_blueprinted']
         end
-        return { vars = { card.config.center.config.max_highlighted } }
+        local max_h = (card and card.config and card.config.center and card.config.center.config and card.config.center.config.max_highlighted) or self.config.max_highlighted
+        
+        return { vars = { max_h } }
     end,
 
     loc_txt = {

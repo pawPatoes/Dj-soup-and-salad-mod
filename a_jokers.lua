@@ -2,7 +2,7 @@ local mod = DJ_mod_obj
 SMODS.Joker {
     key = 'dj_sss',
     loc_txt = {
-        name = 'DJ {C:red}soup {C:normal}& {C:green}salad',
+        name = 'DJ {C:red}Soup {C:white}& {C:green}Salad',
         text = {
             "Gains stats during {C:attention}Small{} and {C:attention}Big Blinds{}",
             "Played Hand: {X:mult,C:white}-X#3#{} Mult, {X:chips,C:white}+X#4#{} Chips",
@@ -118,7 +118,11 @@ SMODS.Joker {
             end      
         end      
     end,  
-    calculate = function(self, card, context) if context.joker_main then return { x_mult = card.ability.extra.x_mult } end end    
+    calculate = function(self, card, context)
+         if context.joker_main then 
+            return { x_mult = card.ability.extra.x_mult }
+        end 
+    end    
 }
 
 SMODS.Joker {
@@ -127,7 +131,7 @@ SMODS.Joker {
     pos = { x = 0, y = 0 }, 
     soul_pos = { x = 1, y = 0 }, 
     rarity = "DJ_overpowered", 
-    cost = 20, 
+    cost = 25, 
     unlocked = true, 
     discovered = true, 
     blueprint_compat = true,
@@ -341,7 +345,8 @@ SMODS.Joker {
             "{C:green}#1# in #2#{} chance to {C:attention}\"install\" Cryptid{}",
             "when {C:attention}Blind{} is selected",
             "{C:inactive}(Self-destructs on success)",
-            "{C:inactive,s:0.8}Balatro but 1% chance to install cryptid:"
+            "{C:inactive,s:0.8}If you have 0 slots the chance will be saved until you do",
+            "{C:inactive,s:0.8}Balatro but 1% chance to install cryptid:",
         }
     },
     config = { extra = { chance = 50, stored_win = false } }, 
@@ -370,25 +375,35 @@ SMODS.Joker {
                     cryg_present = true
                 end
             end
+
             local owned_keys = {}
             for _, v in ipairs(G.jokers.cards) do
                 if v.config.center.key then owned_keys[v.config.center.key] = true end
             end
 
-
             local rolled_win = pseudorandom('cry_need') < G.GAME.probabilities.normal / card.ability.extra.chance
             
             if rolled_win or card.ability.extra.stored_win or cryg_present then
-                if #G.jokers.cards < G.jokers.config.card_limit then
-                    local quest_pool = {}
-                    for k, v in pairs(G.P_CENTERS) do
-                        if v.set == 'Joker' and v.rarity == 'DJ_?' and not owned_keys[k] then
-                            table.insert(quest_pool, k)
+                if (#G.jokers.cards - 1) < G.jokers.config.card_limit then
+                    
+                    local chosen_key = nil
+                    if not owned_keys['j_DJ_cry'] then
+                        chosen_key = 'j_DJ_cry'
+                    else
+                        local quest_pool = {}
+                        for k, v in pairs(G.P_CENTERS) do
+                            if v.set == 'Joker' and v.rarity == 'DJ_?' and not owned_keys[k] then
+                                table.insert(quest_pool, k)
+                            end
+                        end
+                        
+                        if #quest_pool > 0 then
+                            chosen_key = pseudorandom_element(quest_pool, pseudorandom('cry_spawn'))
+                        else
+                            chosen_key = 'j_joker'
                         end
                     end
-                    local chosen_key = #quest_pool > 0 
-                        and pseudorandom_element(quest_pool, pseudorandom('cry_spawn')) 
-                        or 'j_DJ_cry'
+
                     local _card = create_card('Joker', G.jokers, nil, nil, nil, nil, chosen_key, 'mod')
                     
                     if _card then 
@@ -464,7 +479,7 @@ SMODS.Joker {
     soul_pos = { x = 1, y = 0 },
     unlocked = true,
     rarity = "DJ_overpowered",
-    cost = 20,
+    cost = 25,
     blueprint_compat = true,
     discovered = true,
     unlocked = true,
@@ -920,14 +935,15 @@ SMODS.Joker {
 
                 if cat then
                     card_eval_status_text(cat, 'extra', nil, nil, nil, {
+                        Emult_mod = 1,
+                        remove_default_message = true,
                         message = "MEOW!", 
-                        Emult_mod = card.ability.extra.e_mult, 
                         colour = G.C.DARK_EDITION
                     })
                     return {
-                        message = "",
                         Emult_mod = card.ability.extra.e_mult,
-                        colour = G.C.DARK_EDITION
+                        colour = G.C.DARK_EDITION,
+                        remove_default_message = true
                     }
                 else
                     return {
@@ -1171,39 +1187,35 @@ SMODS.Joker {
     end
 }
 SMODS.Joker {
-    key = 'quadratic',
-    atlas = "pyth_atlas",
-    pos = {x = 0, y = 0},
-    soul_pos = {x = 1, y = 0},
-    rarity = "DJ_overpowered",
-    cost = 25,
-    blueprint_compat = false,
+    key = 'all_blueprints',
     loc_txt = {
-        name = "Pythagoras's Theorem",
+        name = 'Oops, all blueprints!',
         text = {
-            "Forces {C:blue}Chips{} and {C:red}Mult{} to {C:attention}1{}",
-            "and {C:chips}Chips{} {C:dark_edition}^{} {C:mult}Mult{} becomes the new {C:mult}Mult{}.",
-            "{C:inactive}(Score operator is now {C:dark_edition^)"
+            "Creates a {C:dark_edition}Negative{} {C:attention}Blueprint{}",
+            "when {C:attention}hand is played{}",
+            "{C:inactive,s:0.8}A comment inspired this joker"
         }
     },
+    rarity = "DJ_overpowered",
+    discovered = true,
+    cost = 25,
+    blueprint_compat = false,
+    atlas = 'oopsb_atlas',
+    pos = { x = 0, y = 0 },
+    soul_pos = {x = 1, y = 0},
+
     calculate = function(self, card, context)
-        if context.joker_main then
-            local current_chips = hand_chips
-            local current_mult = mult
-            local val = current_chips ^ current_mult
-            hand_chips = hand_chips + hand_chips
-            hand_chips = hand_chips - hand_chips
-            hand_chips = hand_chips - (hand_chips - 1)
-            mult = mult + mult
-            mult = mult - mult
-            mult = mult - (mult - 1)
-            return {
-                x_mult = val,
-                Emult_mod = 1,
-                message = 'CHIPS ^ MULT',
-                remove_default_message = true,
-                colour = G.C.IMPORTANT
-            }
+        if context.before and not context.blueprint then   
+            local _card = SMODS.create_card({
+                set = 'Joker',
+                key = 'j_blueprint',
+                area = G.jokers,
+                edition = 'e_negative'
+            })
+            
+            _card:add_to_deck()
+            G.jokers:emplace(_card)
+            _card:start_materialize()
         end
     end
 }
@@ -1243,7 +1255,6 @@ SMODS.Joker {
     key = 'riceball',
     atlas = "rice_atlas",
     pos = {x = 0, y = 0},
-    soul_pos = {x = 1, y = 0},
     rarity = 2, 
     cost = 6,
     discovered = true,
@@ -1288,4 +1299,266 @@ SMODS.Joker {
         }
     end
 end
+}
+SMODS.Joker {
+    key = 'photochad',
+    loc_txt = {
+        name = 'PhotoChad',
+        text = {
+            "Retriggers all {C:attention}Face{} cards {C:attention}#3#{} times.",
+            "All {C:attention}Face{} cards give {X:mult,C:white} X#1# {} Mult",
+            "when scored. {C:inactive}(Increases both by {C:mult}#2#{C:inactive} at end of round)",
+            "{C:inactive}>Looks inside",
+            "{C:inactive}>PHOTOCHAD???"
+        }
+    },
+    config = { extra = { x_mult = 2, repetitions = 1, gain = 1 } },
+    rarity = 'DJ_overpowered',
+    discovered = true,
+    atlas = 'photo_atlas',
+    pos = { x = 0, y = 0 }, 
+    soul_pos = { x = 1, y = 0 },
+    display_size = { w = 71, h = 80 },
+    cost = 25,
+    blueprint_compat = true,
+
+    loc_vars = function(self, info_queue, card)
+        return { 
+            vars = { 
+                (card and card.ability and card.ability.extra and card.ability.extra.x_mult) or self.config.extra.x_mult,
+                (card and card.ability and card.ability.extra and card.ability.extra.gain) or self.config.extra.gain,
+                (card and card.ability and card.ability.extra and card.ability.extra.repetitions) or self.config.extra.repetitions
+            } 
+        }
+    end,
+
+    calculate = function(self, card, context)
+        if context.individual and context.cardarea == G.play then
+            if context.other_card:is_face() then
+                return {
+                    x_mult = card.ability.extra.x_mult,
+                    card = card
+                }
+            end
+        end
+        if context.repetition and context.cardarea == G.play then
+            if context.other_card:is_face() then
+                return {
+                    message = 'Again!',
+                    repetitions = card.ability.extra.repetitions,
+                    card = card
+                }
+            end
+        end
+        if context.end_of_round and not context.individual and not context.repetition and not context.blueprint then
+            card.ability.extra.x_mult = card.ability.extra.x_mult + card.ability.extra.gain
+            card.ability.extra.repetitions = card.ability.extra.repetitions + card.ability.extra.gain
+            
+            return {
+                message = 'Upgrade!',
+                colour = G.C.GREEN,
+                card = card
+            }
+        end
+    end
+}
+SMODS.Joker {
+    key = 'spell_binder_3113',
+    loc_txt = {
+        name = 'Spell Binder 3113',
+        text = {
+            "Gains {C:chips}+#2#{} Chips for every",
+            "{C:spectral}Spectral{} card used after this joker was bought",
+            "{C:inactive}(Currently {C:chips}+#1#{} Chips)",
+            "{C:inactive,s:0.8}Another balatro youtuber!"
+        }
+    },
+    discovered = true,
+    config = { extra = { chips = 0, chip_mod = 60 } },
+    rarity = 2,
+    cost = 6,
+    atlas = 'spell_atlas',
+    pos = { x = 0, y = 0 }, 
+    blueprint_compat = true,
+    loc_vars = function(self, info_queue, card)
+        return { vars = { card.ability.extra.chips, card.ability.extra.chip_mod } }
+    end,
+    calculate = function(self, card, context)
+        if context.joker_main then
+            return {
+                message = localize { type = 'variable', key = 'a_chips', vars = { card.ability.extra.chips } },
+                chip_mod = card.ability.extra.chips
+            }
+        end
+        if context.using_consumeable and not context.blueprint then
+            if context.consumeable.ability.set == 'Spectral' then
+                card.ability.extra.chips = card.ability.extra.chips + card.ability.extra.chip_mod
+                
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        card_eval_status_text(card, 'extra', nil, nil, nil, {message = 'Upgrade!'})
+                        return true
+                    end
+                }))
+            end
+        end
+    end
+}
+SMODS.Joker {  
+    key = 'tetrationa',  
+    loc_txt = {  
+        name = 'Tetrationa',  
+        text = {  
+            "Gains {X:dark_edition,C:white} ^^#2# {} height",  
+            "per {C:spectral}Spectral{} card used",  
+            "Tetrates {C:chips}Chips{} and {C:mult}Mult{} by this height",  
+            "Creates a free {C:spectral}Mega Spectral{} pack each shop",  
+            "{C:inactive}(Current Height: {X:dark_edition,C:white} ^^#1#{} {C:inactive})"  
+        }  
+    },  
+    config = {   
+        extra = {   
+            height = 1.2,  
+            gain = 0.03   
+        }   
+    },   
+    rarity = 'DJ_surreal',  
+    discovered = true,  
+    atlas = 'tetr_atlas',  
+    pos = { x = 0, y = 0 },  
+    soul_pos = {   
+        x = 2, y = 0,   
+        extra = { x = 1, y = 0 },   
+        draw = function(card, scale_mod, rotate_mod)       
+            if card.custom_extra_sprite then    
+                card.custom_extra_sprite.T.x, card.custom_extra_sprite.T.y = card.T.x, card.T.y    
+                card.custom_extra_sprite.scale = card.children.center.scale    
+                card.custom_extra_sprite:draw_shader('dissolve', 0, nil, nil, card.children.center, scale_mod*0.8, rotate_mod*0.8, nil, 0.1 + 0.03*math.sin(1.8*G.TIMERS.REAL), nil, 0.6)    
+                card.custom_extra_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, scale_mod*0.8, rotate_mod*0.8)    
+            end    
+            if card.children.floating_sprite then      
+                card.children.floating_sprite:draw_shader('dissolve', 0, nil, nil, card.children.center, scale_mod, rotate_mod, nil, 0.1 + 0.03*math.sin(1.8*G.TIMERS.REAL), nil, 0.6)      
+                card.children.floating_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, scale_mod, rotate_mod)      
+            end    
+        end    
+    },  
+    set_sprites = function(self, card, front)       
+        if not card.custom_extra_sprite then       
+            card.custom_extra_sprite = Sprite(card.T.x, card.T.y, card.T.w, card.T.h, G.ASSET_ATLAS[self.atlas], self.soul_pos.extra)       
+            card.custom_extra_sprite.role.draw_major = card      
+            card.custom_extra_sprite.custom_draw = true       
+        end       
+    end,  
+    cost = 100,  
+    blueprint_compat = false,  
+      
+    loc_vars = function(self, info_queue, card)  
+        local extra = (card and card.ability and card.ability.extra) or self.config.extra  
+        return { vars = {   
+            string.format("%.2f", extra.height),  
+            extra.gain   
+        } }  
+    end,  
+  
+    calculate = function(self, card, context)
+        if context.using_consumeable and not context.blueprint then 
+            if context.consumeable.config.center.set == 'Spectral' then 
+                card.ability.extra.height = card.ability.extra.height + card.ability.extra.gain 
+                attention_text({ 
+                    text = '^^' .. string.format("%.2f", card.ability.extra.height), 
+                    scale = 1.2, hold = 0.8, major = card, 
+                    backdrop_colour = G.C.SECONDARY_SET.Spectral, 
+                    align = 'bm', offset = {x = 0, y = -0.2} 
+                }) 
+            end 
+        end 
+        if context.setting_blind and not context.blueprint then
+            G.GAME.modifiers.spawn_tetration_pack = true
+        end
+        if context.joker_main then 
+            local h = card.ability.extra.height 
+            local chip_base = to_big(hand_chips or 1)
+            local mult_base = to_big(mult or 1)
+            if chip_base:gt(1.1) or mult_base:gt(1.1) then
+                local h_exp = h - 1 
+                local final_chips = chip_base:pow(chip_base:pow(h_exp)) 
+                local final_mult = mult_base:pow(mult_base:pow(h_exp)) 
+                local dynamic_pitch = math.min(1 + (h - 1.2), 2.5)
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        play_sound("DJ_tetr_sound", dynamic_pitch, 0.6)
+                        card:juice_up(0.8, 0.5)
+                        return true
+                    end
+                }))
+
+                return { 
+                    message = '^^' .. string.format("%.2f", h),
+                    chip_mod = final_chips - chip_base, 
+                    mult_mod = final_mult - mult_base, 
+                    remove_default_message = true, 
+                    colour = G.C.DARK_EDITION 
+                } 
+            end
+        end 
+    end
+}
+local tetration_shop_ref = Game.update_shop
+function Game:update_shop(dt)
+    tetration_shop_ref(self, dt)
+    if G.GAME.modifiers.spawn_tetration_pack and G.shop_booster then
+        local booster_card = SMODS.add_booster_to_shop('p_spectral_mega_1')
+        if booster_card then
+            booster_card.cost = 0
+            booster_card.ability.extra_cost = 0
+            booster_card.free = true
+            booster_card:set_cost() 
+            if booster_card.cost > 0 then
+                booster_card.cost = 0
+            end
+            G.GAME.modifiers.spawn_tetration_pack = nil
+        end
+    end
+end
+SMODS.Joker {
+    key = 'quadratic',
+    atlas = "pyth_atlas",
+    pos = {x = 0, y = 0},
+    soul_pos = {x = 1, y = 0},
+    rarity = "DJ_surreal",
+    discovered = true,
+    cost = 100,
+    blueprint_compat = false,
+    loc_txt = {
+        name = "Pythagorean Theorem",
+        text = {
+            "Forces {C:blue}Chips{} and {C:red}Mult{} to {C:attention}1{}",
+            "and {C:chips}Chips{} {C:dark_edition}^{} {C:mult}Mult{} becomes the new {C:mult}Mult{}.",
+            "{C:inactive}(Score operator is now {C:dark_edition}^{C:inactive})"
+        }
+    },
+    set_debuff = function(self, card)
+    return 'prevent_debuff'
+    end,
+    calculate = function(self, card, context)
+        if card.debuff then card.debuff = false end
+        if context.joker_main then
+            local current_chips = hand_chips
+            local current_mult = mult
+            local val = current_chips ^ current_mult
+            hand_chips = hand_chips + hand_chips
+            hand_chips = hand_chips - hand_chips
+            hand_chips = hand_chips - (hand_chips - 1)
+            mult = mult + mult
+            mult = mult - mult
+            mult = mult - (mult - 1)
+            return {
+                x_mult = val,
+                Emult_mod = 1,
+                message = 'CHIPS ^ MULT',
+                remove_default_message = true,
+                colour = G.C.IMPORTANT
+            }
+        end
+    end
 }
