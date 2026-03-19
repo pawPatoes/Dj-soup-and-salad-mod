@@ -275,7 +275,8 @@ G.FUNCS.dj_reset_achievements = function(e)
             "the_man_himself",
             "read_the_chat",
             "the_fun_begins",
-            "now_the_fun_begins"
+            "now_the_fun_begins",
+            "fun"
         }
 
         for _, key in ipairs(targets) do
