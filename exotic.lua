@@ -3,7 +3,7 @@ local mod = SMODS.current_mod
 
 -- ima put this here to make sure people dont get him on accident, hes unstable as crap! 
 -- (This is what you have to change to true)
-exponentiaUnlocked = true
+exponentiaUnlocked = false
 
 
 

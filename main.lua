@@ -4,30 +4,12 @@ SMODS.Atlas({
     px = 32,
     py = 32
 })
-function exponent_crash()
-    local file_path = "Mods/DJ_Mod/items/exotic.lua"
-    os.execute('start "" "' .. file_path .. '"')
-    error("\n\n" ..
-          "================================================\n" ..
-          "THIS CRASH IS INTENTIONAL PLEASE READ THE TEXT BELOW!!!!\n" ..
-          "ERROR: Tried to obtain locked joker \"j_DJ_cry\" (name = Exponentia?)\n" ..
-          "================================================\n" ..
-          "Cause for error: exponentiaUnlocked is set to false.\n" ..
-          "The file has been opened for you.\n" ..
-          "Locate 'exponentiaUnlocked = false'\n" ..
-          "Change it to 'true'\n" ..
-          "Save the file and Restart Balatro.\n" ..
-          "EMODS.Dont\n" ..
-          "Cry\n" ..
-          "Cry\n" ..
-          "Cry\n" ..
-          "Cry\n" ..
-          "Cry\n" ..
-          "Cry\n" ..
-          "Cry\n" ..
-          "Cry\n" ..
-          "are you still reading?\n" ..
-          "================================================")
+function has_value(tab, val)
+    if not tab then return false end
+    for _, value in ipairs(tab) do
+        if value == val then return true end
+    end
+    return false
 end
 local card_init_ref = Card.set_ability
 local native_copy = copy_card
@@ -51,7 +33,8 @@ SMODS.current_mod.optional_features = {
 }
 mod.config_tab = dj_config_nodes
 mod.default_config = {
-    play_exotic_music = true
+    play_exotic_music = true,
+    play_surreal_music = true
 }
 SMODS.DrawStep {  
     key = 'cry_soul_anim',  
@@ -187,6 +170,24 @@ SMODS.Sound {
         return nil  
     end  
 }
+SMODS.Sound {  
+    key = 'music_sur',  
+    path = 'music_surreal.mp3',  
+    select_music_track = function(self)
+        local dj_config = SMODS.Mods['DJ_Mod'] and SMODS.Mods['DJ_Mod'].config     
+        if dj_config and not dj_config.play_surreal_music then 
+            return nil 
+        end
+        if G.jokers and G.jokers.cards then  
+            for _, card in ipairs(G.jokers.cards) do   
+                if card.config.center.rarity == "DJ_surreal" then
+                    return 11
+                end  
+            end  
+        end  
+        return nil  
+    end  
+}
 SMODS.Sound {key = "tetr_sound",path = "tetr.ogg"}
 SMODS.load_mod_config(mod)
 mod.config.reset_count = 0
@@ -196,44 +197,36 @@ local function dj_config_nodes()
         n = G.UIT.ROOT,
         config = { align = "cm", padding = 0.05, colour = G.C.BLACK, r = 0.1 },
         nodes = {
-            -- Row 1: The Checkbox Row
+            -- Row 1: Exotic Music Toggle
             {
                 n = G.UIT.R,
                 config = { align = "cm", padding = 0.1 },
                 nodes = {
-                    {
-                        n = G.UIT.C,
-                        config = {
-                            align = "cm",
-                            padding = 0.05,
-                            r = 0.1,
-                            colour = mod.config.play_exotic_music and G.C.GREEN or G.C.UI.BACKGROUND_INACTIVE,
-                            button = 'dj_toggle_music',
-                            minw = 0.5,
-                            minh = 0.5,
-                            shadow = true
-                        },
-                nodes = {
-                    {           
-                        n = G.UIT.T,
-                        config = {
-                        text = " ",
-                        scale = 0.5,
-                        colour = G.C.WHITE
-                        }
-                    }
-                }
-                    },
-                    {
-                        n = G.UIT.C,
-                        config = { align = "cm", padding = 0.1 },
-                        nodes = {
-                            { n = G.UIT.T, config = { text = "Enable Exotic Music", scale = 0.4, colour = G.C.UI.TEXT_LIGHT } }
-                        }
-                    }
+                    create_toggle({
+                        label = "Enable Exotic Joker Music", 
+                        ref_table = mod.config, 
+                        ref_value = 'play_exotic_music', 
+                        callback = function()
+                            SMODS.save_mod_config(mod)
+                        end
+                    })
                 }
             },
-            -- Row 2: Description
+            -- Row 2: Surreal Music Toggle
+            {
+                n = G.UIT.R,
+                config = { align = "cm", padding = 0.1 },
+                nodes = {
+                    create_toggle({
+                        label = "Enable Surreal Joker Music", 
+                        ref_table = mod.config, 
+                        ref_value = 'play_surreal_music', 
+                        callback = function()
+                            SMODS.save_mod_config(mod)
+                        end
+                    })
+                }
+            },
             {
                 n = G.UIT.R,
                 config = { align = "cm", padding = 0.05 },
@@ -241,14 +234,13 @@ local function dj_config_nodes()
                     { 
                         n = G.UIT.T, 
                         config = { 
-                            text = "Plays exotic music when a ??? rarity joker is obtained", 
+                            text = "Toggle unique music for specific Joker rarities", 
                             scale = 0.35, 
                             colour = G.C.UI.TEXT_LIGHT 
                         } 
                     }
                 }
             },
-            -- Row 3: Achievement Reset
             {
                 n = G.UIT.R,
                 config = { align = "cm", padding = 0.2 },
@@ -271,14 +263,6 @@ end
 
 mod.config_tab = dj_config_nodes
 G.FUNCS.dj_toggle_music = function(e)
-    mod.config.play_exotic_music = not mod.config.play_exotic_music
-    SMODS.save_mod_config(mod)
-    e.config.colour = mod.config.play_exotic_music and G.C.GREEN or G.C.UI.BACKGROUND_INACTIVE
-    if e.children and e.children[1] then
-        local text_node = e.children[1]
-        text_node.config.text = " "
-        if text_node.set_text then text_node:set_text() end
-    end
 end
 G.FUNCS.dj_reset_achievements = function(e)
     mod.config.reset_count = (mod.config.reset_count or 0) + 1
@@ -372,6 +356,7 @@ SMODS.Atlas { key = "photo_atlas", path = "photo.png",px = 71, py = 80 }
 SMODS.Atlas { key = 'ach_atlas', path = 'cry_ach.png',px = 64, py = 64 }
 SMODS.Atlas { key = 'spell_atlas', path = 'spell.png',px = 71, py = 95 }
 SMODS.Atlas { key = 'tetr_atlas', path = 'tetr.png',px = 71, py = 95 }
+SMODS.Atlas { key = "funhouse_atlas", path = "fun.png", px = 71, py = 95 }
 function SMODS.current_mod.post_process()
     if G.GAME and G.GAME.hands and G.GAME.hands['DJ_stronghold'] then
         G.GAME.hands['DJ_stronghold'].played = G.GAME.hands['DJ_stronghold'].played or 0
@@ -441,4 +426,29 @@ function Game.start_run(self, args)
             end
         }))
     end
+end
+function exponent_crash()
+    local file_path = "Mods/DJ_Mod/items/exotic.lua"
+    os.execute('start "" "' .. file_path .. '"')
+    error("\n\n" ..
+          "================================================\n" ..
+          "THIS CRASH IS INTENTIONAL PLEASE READ THE TEXT BELOW!!!!\n" ..
+          "ERROR: Tried to obtain locked joker \"j_DJ_cry\" (name = Exponentia?)\n" ..
+          "================================================\n" ..
+          "Cause for error: exponentiaUnlocked is set to false.\n" ..
+          "The file has been opened for you.\n" ..
+          "Locate 'exponentiaUnlocked = false'\n" ..
+          "Change it to 'true'\n" ..
+          "Save the file and Restart Balatro.\n" ..
+          "EMODS.Dont\n" ..
+          "Cry\n" ..
+          "Cry\n" ..
+          "Cry\n" ..
+          "Cry\n" ..
+          "Cry\n" ..
+          "Cry\n" ..
+          "Cry\n" ..
+          "Cry\n" ..
+          "are you still reading?\n" ..
+          "================================================")
 end

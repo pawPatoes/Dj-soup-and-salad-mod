@@ -85,6 +85,32 @@ SMODS.Achievement {
     end
 }
 SMODS.Achievement {
+    key = 'fun', 
+    loc_txt = {
+        name = 'LETS HAVE A FUN HOUSE',
+        description = {
+            "Obtain the Funhouse Host joker"
+        }
+    },
+    bypass_all_unlocked = true,
+    atlas = 'ach_atlas',
+    pos = { x = 1, y = 0 },
+    hidden_pos = { x = 0, y = 0 }, 
+    hidden_name = false, 
+    hidden_text = false,
+    
+    unlock_condition = function(self, args)
+        if G.jokers and G.jokers.cards then
+            for _, j in ipairs(G.jokers.cards) do
+                if j.config.center.key == 'j_DJ_funhouse_host' then 
+                    return true 
+                end
+            end
+        end
+        return false
+    end
+}
+SMODS.Achievement {
     key = 'the_fun_begins',
     loc_txt = {
         name = 'The fun begins',
@@ -118,7 +144,8 @@ function Game.update_check_for_unlock(self, args)
     local joker_achievements = {
         'infinite_photochad', 
         'the_man_himself', 
-        'read_the_chat'
+        'read_the_chat',
+        "fun"
     }
 
     for _, key in ipairs(joker_achievements) do

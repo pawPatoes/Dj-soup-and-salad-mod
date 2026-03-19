@@ -4,7 +4,7 @@
   "author": ["pawPatoes"],
   "description": "Adds funny ideas to balala (Credits to cryptid (The mod) and doors (by LSplash))",
   "prefix": "DJ",
-  "version": "2.2",
+  "version": "2.21",
   "main_file": "main.lua",
   "badge_colour": "3e60d4",
   "badge_text_colour": "FFFFFF",
@@ -13,7 +13,6 @@
     "Talisman"
   ],
   "conflicts": [
-    "Cryptid",
     "noituus"
   ]
 }

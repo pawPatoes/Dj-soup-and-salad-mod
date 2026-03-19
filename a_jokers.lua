@@ -1404,6 +1404,168 @@ SMODS.Joker {
         end
     end
 }
+local funhouse_temp = { bet_val = "" }
+
+G.FUNCS.cancel_funhouse_menu = function(e)
+    G.FUNCS.exit_overlay_menu()
+    G.SETTINGS.paused = false
+    funhouse_temp.bet_val = "" 
+end
+
+G.FUNCS.confirm_funhouse_bet = function(e)
+    local raw_input = funhouse_temp.bet_val or ""
+    raw_input = raw_input:gsub("[oO]", "0")
+    local input_val = tonumber(raw_input) 
+    if not input_val then return end
+    local current_dollars = to_number(G.GAME.dollars)
+    if to_number(input_val) <= 0 or to_number(input_val) > current_dollars then 
+        return 
+    end
+    for _, v in ipairs(G.jokers.cards) do
+        if v.config.center.key == 'j_DJ_funhouse_host' then
+            v.ability.extra.active_bet = input_val
+            ease_dollars(-input_val)
+            card_eval_status_text(v, 'extra', nil, nil, nil, {
+                message = "BET: $"..input_val,
+                colour = G.C.MONEY
+            })
+            break
+        end
+    end
+    funhouse_temp.bet_val = "" 
+    G.FUNCS.exit_overlay_menu()
+    G.SETTINGS.paused = false
+end
+
+function create_funhouse_menu()
+    local current_dollars = to_number(G.GAME.dollars)
+    funhouse_temp.bet_val = "" 
+    
+    return {
+        n = G.UIT.ROOT,
+        config = { align = "cm", padding = 0.2, colour = G.C.BLACK, r = 0.1 },
+        nodes = {
+            { n = G.UIT.R, config = { align = "cm", padding = 0.1 }, nodes = {
+                { n = G.UIT.T, config = { text = "PLACE YOUR BET", scale = 0.6, colour = G.C.WHITE } }
+            }},
+            { n = G.UIT.R, config = { align = "cm", padding = 0.1 }, nodes = {
+                -- Displaying the max amount safely
+                { n = G.UIT.T, config = { text = "(Max: $"..tostring(current_dollars)..")", scale = 0.4, colour = G.C.GOLD } }
+            }},
+            { n = G.UIT.R, config = { align = "cm", padding = 0.2 }, nodes = {
+            create_text_input({
+                w = 4, h = 1,
+                 max_length = 10,
+                 prompt_text = "Enter Bet!",
+                 ref_table = funhouse_temp,
+                 ref_value = 'bet_val',
+                 extended_cursor = true,
+                  type = 'string',
+                 character_filter = '0123456789'
+             })
+          }},
+            { n = G.UIT.R, config = { align = "cm" }, nodes = {
+                UIBox_button({ 
+                    label = {"BET"}, 
+                    button = 'confirm_funhouse_bet', 
+                    colour = G.C.GREEN, 
+                    minw = 2 
+                }),
+                UIBox_button({ 
+                    label = {"CANCEL"}, 
+                    button = 'cancel_funhouse_menu', 
+                    colour = G.C.RED, 
+                    minw = 2 
+                })
+            }}
+        }
+    }
+end
+
+G.FUNCS.focus_bet_input = function(e)
+    if G.OVERLAY_MENU then
+        local input = G.OVERLAY_MENU:get_UIE_by_ID('dj_bet_input')
+        if input then 
+        end
+    end
+end
+SMODS.Joker {
+    key = 'funhouse_host',
+    atlas = "funhouse_atlas",
+    pos = { x = 0, y = 0 },
+    unique = true,
+    config = { extra = { active_bet = 0, win_state = false, payout_triggered = false } },
+    loc_txt = {
+        name = "Funhouse Host",
+        text = {
+            "When {C:attention}Blind{} is selected,",
+            "choose an amount of {C:money}${} to {C:money}Bet{}.",
+            "Win in {C:attention}1 hand{} to double it,",
+            "otherwise lose the amount."
+        }
+    },
+    update = function(self, card)
+        if G.jokers and card.area == G.jokers then
+            local host_count = 0
+            for i = 1, #G.jokers.cards do
+                if G.jokers.cards[i].config.center.key == 'j_DJ_funhouse_host' then
+                    host_count = host_count + 1
+                    if host_count > 1 and G.jokers.cards[i] == card then
+                        card:start_dissolve()
+                    end
+                end
+            end
+        end
+    end,
+
+    calculate = function(self, card, context)
+        if context.setting_blind and not self.getting_sliced then
+            card.ability.extra.win_state = false
+            card.ability.extra.payout_triggered = false
+            card.ability.extra.active_bet = card.ability.extra.active_bet or 0
+            local current_money = G.GAME.dollars or 0
+            if to_number(current_money) > 0 then
+                G.E_MANAGER:add_event(Event({
+                    trigger = 'after', delay = 0.5,
+                    func = function()
+                        G.SETTINGS.paused = true
+                        G.FUNCS.overlay_menu({ definition = create_funhouse_menu() })
+                        return true
+                    end
+                }))
+            end
+        end
+        if context.end_of_round and not context.repetition and not context.blueprint then
+            if not card.ability.extra.payout_triggered then
+                card.ability.extra.payout_triggered = true
+                
+                local handsUsed = G.GAME.current_round.hands_played
+                if handsUsed == 1 then
+                    card.ability.extra.win_state = true
+                    local bet = tonumber(card.ability.extra.active_bet) or 0
+                    if bet > 0 then
+                        ease_dollars(bet * 2) 
+                        card.ability.extra.active_bet = 0
+                    end
+
+                    return {
+                        message = "WINNER! +$"..(bet*2),
+                        colour = G.C.MONEY,
+                        card = card
+                    }
+                else
+                    card.ability.extra.win_state = false
+                    card.ability.extra.active_bet = 0
+                    return {
+                        message = "BUST!",
+                        colour = G.C.RED,
+                        card = card
+                    }
+                end
+            end
+        end
+    end
+}
 SMODS.Joker {  
     key = 'tetrationa',  
     loc_txt = {  

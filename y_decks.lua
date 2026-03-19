@@ -16,30 +16,41 @@ SMODS.Back {
         }
     },
     apply = function(self)
-        G.E_MANAGER:add_event(Event({
-            trigger = 'after',
-            delay = 1, 
-            func = function()
-                if G.P_CENTERS.j_DJ_khalid then
-                    SMODS.add_card({ set = 'Joker', key = 'j_DJ_khalid' })
-                end
-                if G.P_CENTERS.c_DJ_new_song then
-                    SMODS.add_card({ set = 'Tarot', key = 'c_DJ_new_song' })
-                end
-                if G.P_CENTERS.v_DJ_another then
-                    G.GAME.used_vouchers.v_DJ_another = true
-                    G.GAME.voucher_counts = (G.GAME.voucher_counts or 0) + 1
-                end
-                if G.P_BLINDS.bl_DJ_no_mods then
-                    if G.GAME and G.GAME.round_resets and G.GAME.round_resets.blind_choices then
-                        G.GAME.round_resets.blind_choices.Boss = 'bl_DJ_no_mods'
-                    end
-                end
-                
-                return true
+    G.E_MANAGER:add_event(Event({
+        trigger = 'after',
+        delay = 1, 
+        func = function()
+            if G.P_CENTERS.j_DJ_khalid then
+                SMODS.add_card({ set = 'Joker', key = 'j_DJ_khalid' })
             end
-        }))
-    end
+            if G.P_CENTERS.c_DJ_new_song then
+                SMODS.add_card({ set = 'Tarot', key = 'c_DJ_new_song' })
+            end
+            if G.P_CENTERS.v_DJ_another then
+    G.E_MANAGER:add_event(Event({
+        trigger = 'after',
+        delay = 0.8,
+        func = function()
+            local card = Card(G.vouchers.T.x, G.vouchers.T.y, G.CARD_W, G.CARD_H, G.P_CARDS.empty, G.P_CENTERS.v_DJ_another)
+            card.set_cost = 0
+            card.cost = 0
+            card:redeem()
+            card:remove()
+            
+            return true
+        end
+    }))
+end
+            if G.P_BLINDS.bl_DJ_no_mods then
+                if G.GAME and G.GAME.round_resets and G.GAME.round_resets.blind_choices then
+                    G.GAME.round_resets.blind_choices.Boss = 'bl_DJ_no_mods'
+                end
+            end
+            
+            return true
+        end
+    }))
+end
 }
 SMODS.Back {
     name = "Black Hole Deck",
