@@ -1620,9 +1620,13 @@ SMODS.Joker {
             string.format("%.2f", extra.height),  
             extra.gain   
         } }  
-    end,  
+    end,
+    set_debuff = function(self, card)
+    return 'prevent_debuff'
+    end,
   
     calculate = function(self, card, context)
+        if card.debuff then card.debuff = false end
         if context.using_consumeable and not context.blueprint then 
             if context.consumeable.config.center.set == 'Spectral' then 
                 card.ability.extra.height = card.ability.extra.height + card.ability.extra.gain 
