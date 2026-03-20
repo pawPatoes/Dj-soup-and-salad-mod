@@ -34,7 +34,8 @@ SMODS.current_mod.optional_features = {
 mod.config_tab = dj_config_nodes
 mod.default_config = {
     play_exotic_music = true,
-    play_surreal_music = true
+    play_surreal_music = true,
+    do_glitch = true
 }
 SMODS.DrawStep {  
     key = 'cry_soul_anim',  
@@ -46,6 +47,12 @@ SMODS.DrawStep {
             self.config.center:custom_soul_anim(self, layer)  
         end  
     end  
+}
+G.GAME = G.GAME or {}
+G.GAME.current_scoring_calculation = {
+    key = "multiply",
+    func = function(self, chips, mult, flames) return chips * mult end,
+    text = 'X'
 }
 mod.mod_icon = "modicon"
 SMODS.ScreenShader {
@@ -62,6 +69,8 @@ SMODS.ScreenShader {
         }
     end,
     should_apply = function(self)
+        local dj_config = SMODS.Mods['DJ_Mod'] and SMODS.Mods['DJ_Mod'].config     
+        if dj_config and not dj_config.do_glitch then return nil end
         return G.GAME.cry_upgrade_glitch_timer and G.GAME.cry_upgrade_glitch_timer > 0
     end
 }
@@ -88,8 +97,25 @@ SMODS.Rarity {
         name = 'Misc.'
     },
     badge_colour = {0.25, 0.87, 0.81, 1},
-    default_weight = 10,
+    default_weight = 0,
 }
+SMODS.Rarity({
+    key = "DJ_soup",
+    loc_txt = {
+        name = "Soup"
+    },
+    badge_colour = G.C.DARK_EDITION,
+    default_weight = 0,
+})
+SMODS.Rarity({
+    key = "endless_exclusive",
+    loc_txt = { name = "Endless Exclusive" },
+    badge_colour = {0.2, 0.05, 0.35, 1}, 
+    default_weight = 0, 
+    can_spawn = function(self)
+        return G.GAME.run_info and G.GAME.run_info.endless
+    end
+})
 SMODS.Rarity {
     key = 'overpowered',
     loc_txt = {
@@ -243,6 +269,34 @@ local function dj_config_nodes()
             },
             {
                 n = G.UIT.R,
+                config = { align = "cm", padding = 0.1 },
+                nodes = {
+                    create_toggle({
+                        label = "Enable glitch effects", 
+                        ref_table = mod.config, 
+                        ref_value = 'do_glitch', 
+                        callback = function()
+                            SMODS.save_mod_config(mod)
+                        end
+                    })
+                }
+            },
+                                    {
+                n = G.UIT.R,
+                config = { align = "cm", padding = 0.05 },
+                nodes = {
+                    { 
+                        n = G.UIT.T, 
+                        config = { 
+                            text = "Allows the glitch effect to appear on screen", 
+                            scale = 0.35, 
+                            colour = G.C.UI.GREEN
+                        } 
+                    }
+                }
+            },
+            {
+                n = G.UIT.R,
                 config = { align = "cm", padding = 0.2 },
                 nodes = {
                     {
@@ -358,6 +412,7 @@ SMODS.Atlas { key = 'ach_atlas', path = 'cry_ach.png',px = 64, py = 64 }
 SMODS.Atlas { key = 'spell_atlas', path = 'spell.png',px = 71, py = 95 }
 SMODS.Atlas { key = 'tetr_atlas', path = 'tetr.png',px = 71, py = 95 }
 SMODS.Atlas { key = "funhouse_atlas", path = "fun.png", px = 71, py = 95 }
+SMODS.Atlas { key = "uni_atlas", path = "uni.png", px = 71, py = 95 }
 function SMODS.current_mod.post_process()
     if G.GAME and G.GAME.hands and G.GAME.hands['DJ_stronghold'] then
         G.GAME.hands['DJ_stronghold'].played = G.GAME.hands['DJ_stronghold'].played or 0

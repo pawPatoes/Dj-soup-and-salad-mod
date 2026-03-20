@@ -453,7 +453,9 @@ SMODS.Joker {
     rarity = "DJ_misc",
     cost = 0,    
     atlas = 'sr_atlas',    
-    pos = { x = 0, y = 0 },     
+    pos = { x = 0, y = 0 }, 
+    unique = true,
+    weight = 10,    
     blueprint_compat = false,    
     discovered = true,     
     add_to_deck = function(self, card)
@@ -1005,8 +1007,9 @@ SMODS.Joker {
     rarity = "DJ_misc",
     blueprint_compat = false,
     discovered = true,
+    weight = 5,
     loc_txt = {
-        name = "Malicious Installer",
+        name = "Cryptid Installer",
         text = { "{C:red}#1#{}" }
     },
     loc_vars = function(self, info_queue, card)
@@ -1500,7 +1503,7 @@ SMODS.Joker {
         text = {
             "When {C:attention}Blind{} is selected,",
             "choose an amount of {C:money}${} to {C:money}Bet{}.",
-            "Win in {C:attention}1 hand{} to double it,",
+            "Win in {C:attention}1 hand{} to {C:mult}1.5X it,",
             "otherwise lose the amount."
         }
     },
@@ -1544,12 +1547,12 @@ SMODS.Joker {
                     card.ability.extra.win_state = true
                     local bet = tonumber(card.ability.extra.active_bet) or 0
                     if bet > 0 then
-                        ease_dollars(bet * 2) 
+                        ease_dollars(bet * 1.5) 
                         card.ability.extra.active_bet = 0
                     end
 
                     return {
-                        message = "WINNER! +$"..(bet*2),
+                        message = "WINNER! +$"..(bet*1.5),
                         colour = G.C.MONEY,
                         card = card
                     }
@@ -1566,8 +1569,112 @@ SMODS.Joker {
         end
     end
 }
+SMODS.Joker {
+    key = 'universal_collapse',
+    atlas = "uni_atlas",
+    pos = { x = 0, y = 0 },
+    discovered = true,
+    blueprint_compat = false,
+    rarity = "DJ_endless_exclusive",
+    weight = 0,
+    config = { 
+        extra = { 
+            x_blind = 1000,
+            scaling = 500
+        } 
+    },
+    loc_txt = {
+        name = "\"Universal\" Collapse",
+        text = {
+            "{X:attention,C:white}X#1#{} Blind size,",
+            "Increases by {C:attention}#2#{} per Blind.",
+            "Removes all {C:attention}Hand Levels{}",
+            "at start of {C:attention}Blind{}.",
+            "{C:attention}Fuses with DJ {C:red}Soup {C:black}& {C:green}Salad{}",
+            "{C:inactive,s:0.8}Image taken from {C:red,s:0.8}Mayhem!{}",
+        }
+    },
+    loc_vars = function(self, info_queue, card)
+        return { vars = { card.ability.extra.x_blind, card.ability.extra.scaling } }
+    end,
+    
+    add_to_deck = function(self, card, from_debuff)
+        for k, v in pairs(G.GAME.hands) do
+            v.level = 1
+            v.played = 0
+            v.mult = v.s_mult or 10
+            v.chips = v.s_chips or 10
+            G.GAME.cry_body_multiplier = (G.GAME.cry_body_multiplier or 1) * card.ability.extra.x_blind
+        end
+        update_hand_text('default', {mult = 0, chips = 0, level = '', handname = ''})
+    end,
+    calculate = function(self, card, context)
+        if context.setting_blind and not self.getting_sliced and not context.blueprint then
+            card.ability.extra.x_blind = card.ability.extra.x_blind + card.ability.extra.scaling
+            for k, v in pairs(G.GAME.hands) do
+                v.level = 1
+                v.played = 0
+                v.mult = v.s_mult or 10
+                v.chips = v.s_chips or 10
+            end
+            update_hand_text('default', {mult = 0, chips = 0, level = '', handname = ''})
+            local tet_card = nil
+            for i = 1, #G.jokers.cards do
+                if G.jokers.cards[i].config.center.key == 'j_DJ_dj_sss' then
+                    tet_card = G.jokers.cards[i]
+                    break
+                end
+            end
+            if tet_card then
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        tet_card:start_dissolve()
+                        card:start_dissolve()
+                        
+                        local new_card = create_card('Joker', G.jokers, nil, "DJ_soup", nil, nil, nil)
+                        new_card:add_to_deck()
+                        G.jokers:emplace(new_card)
+                        return true
+                    end
+                }))
+            end
+        end
+    end
+}
+-- Global Tetration Helper: Handles BigNumbers and Vanilla numbers
+function DJ_TET(base, h)
+    if h == 1 then return base end
+    -- Talisman BigNum Check (Tables with .pow)
+    if type(base) == 'table' and base.pow then
+        return base:pow(base:pow(h - 1))
+    end
+    -- Vanilla Fallback
+    return base ^ (base ^ (h - 1))
+end
+
+-- Register the ^^ Scoring Mode
+SMODS.Scoring_Calculation {
+    key = "tetration",
+    text = '^^',
+    func = function(self, chips, mult, flames)
+        local total_h = 1
+        -- Automatically finds any Joker with 'tet_h' in its config
+        if G.jokers and G.jokers.cards then
+            for _, v in ipairs(G.jokers.cards) do
+                if v.ability and v.ability.extra and v.ability.extra.tet_h and not v.debuff then
+                    total_h = total_h + (v.ability.extra.tet_h - 1)
+                end
+            end
+        end
+        return DJ_TET(chips, total_h) * DJ_TET(mult, total_h)
+    end
+}
+SMODS.Calculation_Controls.Tchips = true  
+SMODS.Calculation_Controls.Tmult = true
 SMODS.Joker {  
-    key = 'tetrationa',  
+    key = 'tetrationa', 
+    tsprites = true,
+    pos = { x = 0, y = 0}, 
     loc_txt = {  
         name = 'Tetrationa',  
         text = {  
@@ -1578,60 +1685,53 @@ SMODS.Joker {
             "{C:inactive}(Current Height: {X:dark_edition,C:white} ^^#1#{} {C:inactive})"  
         }  
     },  
-    config = {   
-        extra = {   
-            height = 1.2,  
-            gain = 0.03   
-        }   
-    },   
+    config = {  
+        extra = {  
+            tet_h = 1.2,
+            gain = 0.03 
+        }  
+    },  
     rarity = 'DJ_surreal',  
     discovered = true,  
     atlas = 'tetr_atlas',  
-    pos = { x = 0, y = 0 },  
-    soul_pos = {   
-        x = 2, y = 0,   
-        extra = { x = 1, y = 0 },   
-        draw = function(card, scale_mod, rotate_mod)       
-            if card.custom_extra_sprite then    
-                card.custom_extra_sprite.T.x, card.custom_extra_sprite.T.y = card.T.x, card.T.y    
-                card.custom_extra_sprite.scale = card.children.center.scale    
-                card.custom_extra_sprite:draw_shader('dissolve', 0, nil, nil, card.children.center, scale_mod*0.8, rotate_mod*0.8, nil, 0.1 + 0.03*math.sin(1.8*G.TIMERS.REAL), nil, 0.6)    
-                card.custom_extra_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, scale_mod*0.8, rotate_mod*0.8)    
-            end    
-            if card.children.floating_sprite then      
-                card.children.floating_sprite:draw_shader('dissolve', 0, nil, nil, card.children.center, scale_mod, rotate_mod, nil, 0.1 + 0.03*math.sin(1.8*G.TIMERS.REAL), nil, 0.6)      
-                card.children.floating_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, scale_mod, rotate_mod)      
-            end    
-        end    
-    },  
-    set_sprites = function(self, card, front)       
-        if not card.custom_extra_sprite then       
-            card.custom_extra_sprite = Sprite(card.T.x, card.T.y, card.T.w, card.T.h, G.ASSET_ATLAS[self.atlas], self.soul_pos.extra)       
-            card.custom_extra_sprite.role.draw_major = card      
-            card.custom_extra_sprite.custom_draw = true       
-        end       
-    end,  
     cost = 100,  
     blueprint_compat = false,  
-      
+    soul_pos = { 
+        x = 2, y = 0, 
+        extra = { x = 1, y = 0 },  
+        draw = function(card, scale_mod, rotate_mod)     
+            if card.custom_extra_sprite then  
+                card.custom_extra_sprite.T.x, card.custom_extra_sprite.T.y = card.T.x, card.T.y  
+                card.custom_extra_sprite.scale = card.children.center.scale  
+                card.custom_extra_sprite:draw_shader('dissolve', 0, nil, nil, card.children.center, scale_mod*0.8, rotate_mod*0.8, nil, 0.1 + 0.03*math.sin(1.8*G.TIMERS.REAL), nil, 0.6)  
+                card.custom_extra_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, scale_mod*0.8, rotate_mod*0.8)  
+            end  
+            if card.children.floating_sprite then    
+                card.children.floating_sprite:draw_shader('dissolve', 0, nil, nil, card.children.center, scale_mod, rotate_mod, nil, 0.1 + 0.03*math.sin(1.8*G.TIMERS.REAL), nil, 0.6)    
+                card.children.floating_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, scale_mod, rotate_mod)    
+            end  
+        end  
+    },
+    set_sprites = function(self, card, front)     
+        if not card.custom_extra_sprite then     
+            card.custom_extra_sprite = Sprite(card.T.x, card.T.y, card.T.w, card.T.h, G.ASSET_ATLAS[self.atlas], self.soul_pos.extra)     
+            card.custom_extra_sprite.role.draw_major = card    
+            card.custom_extra_sprite.custom_draw = true     
+        end     
+    end,
     loc_vars = function(self, info_queue, card)  
         local extra = (card and card.ability and card.ability.extra) or self.config.extra  
         return { vars = {   
-            string.format("%.2f", extra.height),  
+            string.format("%.2f", extra.tet_h),  
             extra.gain   
         } }  
     end,
-    set_debuff = function(self, card)
-    return 'prevent_debuff'
-    end,
-  
     calculate = function(self, card, context)
-        if card.debuff then card.debuff = false end
         if context.using_consumeable and not context.blueprint then 
             if context.consumeable.config.center.set == 'Spectral' then 
-                card.ability.extra.height = card.ability.extra.height + card.ability.extra.gain 
+                card.ability.extra.tet_h = card.ability.extra.tet_h + card.ability.extra.gain 
                 attention_text({ 
-                    text = '^^' .. string.format("%.2f", card.ability.extra.height), 
+                    text = '^^' .. string.format("%.2f", card.ability.extra.tet_h), 
                     scale = 1.2, hold = 0.8, major = card, 
                     backdrop_colour = G.C.SECONDARY_SET.Spectral, 
                     align = 'bm', offset = {x = 0, y = -0.2} 
@@ -1641,32 +1741,24 @@ SMODS.Joker {
         if context.setting_blind and not context.blueprint then
             G.GAME.modifiers.spawn_tetration_pack = true
         end
-        if context.joker_main then 
-            local h = card.ability.extra.height 
-            local chip_base = to_big(hand_chips or 1)
-            local mult_base = to_big(mult or 1)
-            if chip_base:gt(1.1) or mult_base:gt(1.1) then
-                local h_exp = h - 1 
-                local final_chips = chip_base:pow(chip_base:pow(h_exp)) 
-                local final_mult = mult_base:pow(mult_base:pow(h_exp)) 
-                local dynamic_pitch = math.min(1 + (h - 1.2), 2.5)
-                G.E_MANAGER:add_event(Event({
-                    func = function()
-                        play_sound("DJ_tetr_sound", dynamic_pitch, 0.6)
-                        card:juice_up(0.8, 0.5)
-                        return true
-                    end
-                }))
-
-                return { 
-                    message = '^^' .. string.format("%.2f", h),
-                    chip_mod = final_chips - chip_base, 
-                    mult_mod = final_mult - mult_base, 
-                    remove_default_message = true, 
-                    colour = G.C.DARK_EDITION 
-                } 
-            end
-        end 
+        if context.joker_main then
+            local h = card.ability.extra.tet_h
+            local dynamic_pitch = math.min(1 + (h - 1.2), 2.5)
+            G.E_MANAGER:add_event(Event({
+                func = function()
+                    play_sound("DJ_tetr_sound", dynamic_pitch, 0.6)
+                    card:juice_up(0.8, 0.5)
+                    return true
+                end
+            }))
+            hand_chips = DJ_TET(hand_chips, h)
+            mult = DJ_TET(mult, h)
+            update_hand_text({delay = 0}, {chips = hand_chips, mult = mult})
+            return {
+                message = '^^' .. string.format("%.2f", h),
+                colour = G.C.DARK_EDITION,
+            }
+        end
     end
 }
 local tetration_shop_ref = Game.update_shop
@@ -1686,6 +1778,23 @@ function Game:update_shop(dt)
         end
     end
 end
+SMODS.Scoring_Calculation {
+    key = "exponent",
+    text = '^',
+    func = function(self, chips, mult, flames)
+        if type(chips) == 'table' and chips.pow then
+            return chips:pow(mult)
+        end
+        return chips ^ mult
+    end
+}
+local ui_update_ref = Game.update
+function Game:update(dt)
+    if G.GAME and not G.GAME.current_scoring_calculation then
+        G.GAME.current_scoring_calculation = SMODS.Scoring_Calculations.multiply
+    end
+    ui_update_ref(self, dt)
+end
 SMODS.Joker {
     key = 'quadratic',
     atlas = "pyth_atlas",
@@ -1698,32 +1807,74 @@ SMODS.Joker {
     loc_txt = {
         name = "Pythagorean Theorem",
         text = {
-            "Forces {C:blue}Chips{} and {C:red}Mult{} to {C:attention}1{}",
-            "and {C:chips}Chips{} {C:dark_edition}^{} {C:mult}Mult{} becomes the new {C:mult}Mult{}.",
-            "{C:inactive}(Score operator is now {C:dark_edition}^{C:inactive})"
+            "Forces the {C:attention}Score Operator{} to {C:dark_edition}^",
+            "{C:inactive}(Total Score becomes {C:blue}Chips {C:dark_edition}^{C:red} Mult{C:inactive})"
         }
     },
-    set_debuff = function(self, card)
-    return 'prevent_debuff'
+
+    set_debuff = function(self, card) return 'prevent_debuff' end,
+    add_to_deck = function(self, card, from_debuff)
+        SMODS.set_scoring_calculation('exponent')
     end,
     calculate = function(self, card, context)
         if card.debuff then card.debuff = false end
         if context.joker_main then
-            local current_chips = hand_chips
-            local current_mult = mult
-            local val = current_chips ^ current_mult
-            hand_chips = hand_chips + hand_chips
-            hand_chips = hand_chips - hand_chips
-            hand_chips = hand_chips - (hand_chips - 1)
-            mult = mult + mult
-            mult = mult - mult
-            mult = mult - (mult - 1)
+            SMODS.set_scoring_calculation('exponent')
+        end
+    end,
+    remove_from_deck = function(self, card, from_debuff)
+        SMODS.set_scoring_calculation('multiply')
+    end
+}
+function DJ_PENT(base, h)
+    if h == 1 then return base end
+    return DJ_TET(base, h + (base - 1))
+end
+SMODS.Joker {
+    key = '2763_joker',
+    atlas = "place_atlas",
+    pos = { x = 0, y = 0 },
+    rarity = "DJ_soup", 
+    discovered = true,
+    cost = 2763,
+    config = { 
+        extra = { 
+            t_pow = 1.0, 
+            t_grow = 0.02763
+        } 
+    },
+    loc_txt = {
+        name = "2763",
+        text = {
+            "Gains {X:dark_edition,C:white}^^^#2#{} mult per triggered card.",
+            "Currently: {X:dark_edition,C:white}^^^#1#{} Mult",
+            "{C:inactive,s:0.8}BFDI REFERENCE NO WAY??"
+        }
+    },
+    loc_vars = function(self, info_queue, card)
+        return { vars = { 
+            string.format("%.6f", card.ability.extra.t_pow),
+            string.format("%.6f", card.ability.extra.t_grow)
+        } }
+    end,
+
+    calculate = function(self, card, context)
+        if context.cardarea == G.play and context.individual and not context.blueprint then
+            card.ability.extra.t_pow = card.ability.extra.t_pow + card.ability.extra.t_grow
             return {
-                x_mult = val,
-                Emult_mod = 1,
-                message = 'CHIPS ^ MULT',
-                remove_default_message = true,
-                colour = G.C.IMPORTANT
+                extra = { focus = card, message = "^^^" .. string.format("%.6f", card.ability.extra.t_pow) },
+                colour = G.C.DARK_EDITION
+            }
+        end
+        if context.joker_main then
+            local p = card.ability.extra.t_pow
+            mult = DJ_PENT(mult, p)
+            update_hand_text({delay = 0}, {chips = hand_chips, mult = mult})
+            return {
+                message = "^^^" .. string.format("%.6f", p),
+                EEEmult_mod = 1,
+                hold = 0.5,
+                colour = G.C.DARK_EDITION
             }
         end
     end

@@ -3,7 +3,7 @@ local mod = SMODS.current_mod
 
 -- ima put this here to make sure people dont get him on accident, hes unstable as crap! 
 -- (This is what you have to change to true)
-exponentiaUnlocked = false
+exponentiaUnlocked = true
 
 
 
@@ -216,6 +216,7 @@ SMODS.Joker {
             "Gives {X:mult,C:white} X2 {} Mult for every scored card",
             "Creates a {C:attention}Jolly Joker{}",
             "at the start of every hand",
+            "{C:inactive,s:0.8}Random ahh bank"
         }
     },
     rarity = "DJ_?",
