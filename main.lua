@@ -113,8 +113,14 @@ SMODS.Rarity({
     badge_colour = {0.2, 0.05, 0.35, 1}, 
     default_weight = 0, 
     can_spawn = function(self)
-        return G.GAME.run_info and G.GAME.run_info.endless
+        return G.GAME.screen_state == 'endless' or G.GAME.round_res_num > 8 or (G.GAME.run_info and G.GAME.run_info.endless)
     end
+})
+SMODS.Rarity({
+    key = "exc",
+    loc_txt = { name = "Exclusive" },
+    badge_colour = G.C.DARK_EDITION, 
+    default_weight = 0, 
 })
 SMODS.Rarity {
     key = 'overpowered',
@@ -281,7 +287,7 @@ local function dj_config_nodes()
                     })
                 }
             },
-                                    {
+            {
                 n = G.UIT.R,
                 config = { align = "cm", padding = 0.05 },
                 nodes = {
@@ -293,6 +299,34 @@ local function dj_config_nodes()
                             colour = G.C.UI.GREEN
                         } 
                     }
+                }
+            },
+                        {
+                n = G.UIT.R,
+                config = { align = "cm", padding = 0.1 },
+                nodes = {
+                    create_toggle({
+                        label = "Spawn in with Cryptid Installer Joker", 
+                        ref_table = mod.config, 
+                        ref_value = 'spawn_cry', 
+                        callback = function()
+                            SMODS.save_mod_config(mod)
+                        end
+                    })
+                }
+            },
+                        {
+                n = G.UIT.R,
+                config = { align = "cm", padding = 0.1 },
+                nodes = {
+                    create_toggle({
+                        label = "Spawn in with SR Joker", 
+                        ref_table = mod.config, 
+                        ref_value = 'spawn_sr', 
+                        callback = function()
+                            SMODS.save_mod_config(mod)
+                        end
+                    })
                 }
             },
             {
@@ -330,7 +364,9 @@ G.FUNCS.dj_reset_achievements = function(e)
             "read_the_chat",
             "the_fun_begins",
             "now_the_fun_begins",
-            "fun"
+            "fun",
+            "2763",
+            "nuh_uh"
         }
 
         for _, key in ipairs(targets) do
@@ -413,13 +449,21 @@ SMODS.Atlas { key = 'spell_atlas', path = 'spell.png',px = 71, py = 95 }
 SMODS.Atlas { key = 'tetr_atlas', path = 'tetr.png',px = 71, py = 95 }
 SMODS.Atlas { key = "funhouse_atlas", path = "fun.png", px = 71, py = 95 }
 SMODS.Atlas { key = "uni_atlas", path = "uni.png", px = 71, py = 95 }
+SMODS.Atlas { key = "2763_atlas", path = "2763.png", px = 95, py = 71 }
+SMODS.Atlas { key = "chicot_atlas", path = "chicot.png", px = 71, py = 95 }
+
 function SMODS.current_mod.post_process()
     if G.GAME and G.GAME.hands and G.GAME.hands['DJ_stronghold'] then
         G.GAME.hands['DJ_stronghold'].played = G.GAME.hands['DJ_stronghold'].played or 0
     end
 end
-
-
+local card_set_ability_ref = Card.set_ability
+function Card.set_ability(self, center, initial, delay_sprites)
+    if center.key == 'j_chicot' then
+        center = G.P_CENTERS['j_DJ_chicot']
+    end
+    return card_set_ability_ref(self, center, initial, delay_sprites)
+end
 local get_edition_ref = get_edition
 function get_edition(_args)
     local edition = get_edition_ref(_args)
@@ -457,8 +501,6 @@ function Game.start_run(self, args)
         local to_spawn = {
             { val = 'spawn_sr',       key = 'j_DJ_sr' },
             { val = 'spawn_cry',       key = 'j_DJ_cryi' },
-            
-
         }
 
         G.E_MANAGER:add_event(Event({

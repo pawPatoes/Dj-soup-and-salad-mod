@@ -356,13 +356,11 @@ SMODS.Joker {
             for _, j in ipairs(G.jokers.cards) do
                 if j.config.center.key == 'j_jolly' then
                     jolly_count = jolly_count + 1
-                elseif j ~= card and j.config.center.rarity ~= "DJ_?" then
+                elseif j ~= card and j.config.center.rarity ~= "DJ_?" and j ~= card and j.config.center.rarity ~= "DJ_misc" then
                     table.insert(other_jokers, j)
                 end
             end
-
             local count_to_copy = math.min(jolly_count, 35)
-
             if count_to_copy > 0 and #other_jokers > 0 then
                 G.E_MANAGER:add_event(Event({
                     func = function()

@@ -1040,15 +1040,14 @@ SMODS.Joker {
     pos = {x = 0, y = 0},
     soul_pos = {x = 1, y = 0},
     config = {},
-    rarity = "DJ_misc",
+    rarity = "DJ_exc",
     blueprint_compat = true,
     discovered = true,
     loc_txt = {
         name = "{C:purple}PurplePrint{}",
         text = { 
             "Retriggers Jokers to the", 
-            "{C:attention}left{} and {C:attention}right{}",
-            "{C:inactive}Status: #1#" 
+            "{C:attention}left{} and {C:attention}right{}"
         }
     },
     loc_vars = function(self, info_queue, card)
@@ -1099,23 +1098,39 @@ SMODS.Joker {
         name = "{C:red}RedPrint{}",
         text = { 
             "Copies the Joker to the {C:attention}left{}", 
-            "{C:inactive}(Fuses with Blueprints){}",
-            "{C:inactive}Status: #1#" 
+            "{C:inactive}(Fuses with Blueprints){}"
         }
     },
-    loc_vars = function(self, info_queue, card)
-        local status = "None"
-        if G.jokers and G.jokers.cards then
-            for i = 1, #G.jokers.cards do
-                if G.jokers.cards[i] == card then
-                    local target = G.jokers.cards[i - 1]
-                    if target then
-                        status = target.config.center.blueprint_compat and "Compatible" or "Incompatible"
-                    end
-                end
-            end
-        end
-        return { vars = { status } }
+        loc_vars = function(self, info_queue, card)  
+        local status = "None"  
+        local colour = {0.5, 0.5, 0.5, 1}
+        local text = "None"  
+        
+        if G.jokers and G.jokers.cards then  
+            for i = 1, #G.jokers.cards do  
+                if G.jokers.cards[i] == card then  
+                    local target = G.jokers.cards[i - 1]  
+                    if target then  
+                        local compatible = target.config.center.blueprint_compat == true  
+                        status = compatible and "Compatible" or "Incompatible"  
+                        colour = compatible and {0, 0.8, 0, 1} or {0.8, 0, 0, 1} -- Green or Red HEX  
+                        text = compatible and "Compatible" or "Incompatible"  
+                    end  
+                    break  
+                end  
+            end  
+        end  
+        
+        return {  
+            vars = { status },  
+            main_end = {  
+                {n=G.UIT.R, config={align="cm"}, nodes={  
+                    {n=G.UIT.R, config={align="cm", colour = colour, r = 0.1, minw = 1.8, minh = 0.3, emboss = 0.05, padding = 0.03}, nodes={  
+                        {n=G.UIT.T, config={text = text, colour = G.C.WHITE, scale = 0.3, shadow = true}}  
+                    }}  
+                }}  
+            }  
+        }  
     end,
     draw = function(self, card, layer)
         if layer == 'front' then card.children.front:set_role_col(G.C.RED) end
@@ -1302,6 +1317,202 @@ SMODS.Joker {
         }
     end
 end
+}
+local select_blind_ref = G.FUNCS.select_blind
+G.FUNCS.select_blind = function(e)
+    if e.config and e.config.ref_table and e.config.ref_table.key == 'bl_plant' then
+        local chicot = nil
+        if G.jokers and G.jokers.cards then
+            for _, j in ipairs(G.jokers.cards) do
+                if j.config.center.key == 'j_DJ_chicot' and not j.debuff then
+                    chicot = j; break
+                end
+            end
+        end
+
+        if chicot then  
+            card_eval_status_text(chicot, 'extra', nil, nil, nil, {message = "NUH UH!", colour = G.C.RED})
+            play_sound('DJ_buzzer_sound', 1, 0.4)
+            check_for_unlock({chicot = true})
+            
+            local new_boss = get_new_boss()
+            while new_boss == 'bl_plant' or new_boss == 'bl_DJ_no_mods' do
+                new_boss = get_new_boss()
+            end
+            
+            if G.GAME.blind then
+                G.GAME.blind:set_blind(G.P_BLINDS[new_boss])
+                G.GAME.blind:disable()
+            end
+            e.config.ref_table = G.P_BLINDS[new_boss]
+        end
+    end
+    select_blind_ref(e)
+end
+
+SMODS.Joker {
+    key = 'chicot',
+    atlas = 'chicot_atlas',
+    pos = {x = 0, y = 0},
+    soul_pos = {x = 1, y = 0},
+    rarity = 4,
+    cost = 20,
+    blueprint_compat = true,
+    loc_txt = {
+        name = "Chicot but better",
+        text = {
+            "All Boss penalties are {C:green}reversed{},",
+            "{C:inactive,s:0.8}\"Chicot is the worst joker in the game!\"",
+            "{C:red}THIS JOKER HAS NOT BEEN PLAYTESTED ON EVERY SINGLE BLIND!",
+            "{C:inactive,s:0.7}#2#" 
+        }
+    },
+
+    loc_vars = function(self, info_queue, card)
+        local status = card.ability.current_reversal or "Searching..."
+        local heart_targets = card.ability.heart_card_list or ""
+        local colour = G.C.GREEN
+        if not card.ability.current_reversal then colour = G.C.UI.TEXT_INACTIVE end
+
+        return {  
+            vars = { status, heart_targets },  
+            main_end = {  
+                {n=G.UIT.R, config={align="cm"}, nodes={  
+                    {n=G.UIT.R, config={align="cm", colour = colour, r = 0.1, minw = 1.8, minh = 0.3, emboss = 0.05, padding = 0.03}, nodes={  
+                        {n=G.UIT.T, config={text = status, colour = G.C.WHITE, scale = 0.4, shadow = true}}  
+                    }}  
+                }}  
+            }  
+        }  
+    end,
+
+    add_to_deck = function(self, card, from_debuff)
+        if G.GAME and G.GAME.used_jokers then G.GAME.used_jokers['j_chicot'] = true end
+    end,
+
+    remove_from_deck = function(self, card, from_debuff)
+        local b = card.ability.last_boss_key
+        if b == 'bl_manacle' then G.hand:change_size(-2) end
+        if b == 'bl_serpent' then G.hand:change_size(-3) end
+        if b == 'bl_fish' then G.hand:change_size(-(card.ability.fish_count or 0)) end
+        if G.GAME and G.GAME.used_jokers then G.GAME.used_jokers['j_chicot'] = nil end
+        card.ability.last_boss_key = nil
+        card.ability.boss_processed = nil
+    end,
+
+    update = function(self, card)
+        if G.STAGE == G.STAGES.RUN and G.GAME.used_jokers then G.GAME.used_jokers['j_chicot'] = true end
+
+        if G.STAGE == G.STAGES.RUN and G.GAME.blind and G.GAME.blind.boss and not card.debuff then
+            local boss = G.GAME.blind
+            local b = boss.config.blind.key
+            
+            if not boss.disabled and not card.ability.boss_processed then
+                card.ability.last_boss_key = b
+                card.ability.fish_count = 0
+                
+                local effects = {
+                    bl_club = "Club X2", bl_goad = "Spade X2",
+                    bl_head = "Heart X2", bl_window = "Diamond X2",
+                    bl_plant = "REJECTED", bl_mark = "Face Card X2",
+                    bl_final_leaf = "All Cards X2", bl_pillar = "All Cards X1.5",
+                    bl_manacle = "+2 Hand Size", bl_water = "Double Discards",
+                    bl_needle = "+2 Hands", bl_wall = "Half Blind Size",
+                    bl_vessel = "Half Blind Size", bl_flint = "Triple Power",
+                    bl_arm = "Double Level Up", bl_tooth = "Earn $2 per Card",
+                    bl_ox = "Double Money", bl_psychic = "X5 (5 cards)",
+                    bl_eye = "X10 (Repeats)", bl_mouth = "X10 (One Type)",
+                    bl_heart = "X5 Random Joker", bl_anchor = "Negative Jokers",
+                    bl_bell = "Gold cards", bl_serpent = "+3 Hand Size",
+                    bl_hook = "+1 Hand Size", bl_house = "First Hand X2.5",
+                    bl_wheel = "1/7 Chance X2", bl_fish = "+1 Hand Size/Play",
+                    bl_final_bell = "Forced Gold Card", bl_final_acorn = "Temp Polychrome",
+                    bl_final_heart = "5 Cards X5 Mult", bl_DJ_no_mods = "Modded Polychrome"
+                }
+                card.ability.current_reversal = effects[b] or "Modded blind/unaccounted for"
+                if b == 'bl_manacle' then G.hand:change_size(2) end
+                if b == 'bl_serpent' then G.hand:change_size(3) end
+                if b == 'bl_water' then ease_discard((G.GAME.starting_params.discards or 3) * 2) end
+                if b == 'bl_needle' then ease_hands_played(2) end
+                if b == 'bl_wall' or b == 'bl_vessel' or b == 'bl_final_leaf' then 
+                    boss.chips = boss.chips / 2; boss.chip_text = number_format(boss.chips)
+                end
+                if b == 'bl_arm' and G.GAME.last_hand_playing then
+                    level_up_hand(card, G.GAME.last_hand_playing, nil, 1)
+                end
+                if (b == 'bl_DJ_no_mods' or b == 'bl_final_acorn') and G.jokers and G.jokers.cards then
+                    for _, j in ipairs(G.jokers.cards) do
+                        if j.config.center.key ~= 'j_DJ_chicot' and not j.edition then
+                            j:set_edition({polychrome = true}, true)
+                            j.temp_chicot_poly = true
+                        end
+                    end
+                end
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        play_sound('DJ_buzzer_sound', 1, 0.4)
+                        card_eval_status_text(card, 'extra', nil, nil, nil, {message = "Boss Reversed!", colour = G.C.GREEN})
+                        return true
+                    end
+                }))
+
+                boss:disable()
+                card.ability.boss_processed = true
+            end
+            if boss.active then
+                for _, area in ipairs({G.play, G.hand, G.jokers}) do
+                    if area and area.cards then
+                        for _, v in ipairs(area.cards) do
+                            v.debuff = false; v:set_debuff(false)
+                        end
+                    end
+                end
+            end
+        end
+    end,
+
+    calculate = function(self, card, context)
+        local b = card.ability.last_boss_key or (G.GAME.blind and G.GAME.blind.config.blind.key)
+        if context.after and b == 'bl_arm' then
+            level_up_hand(card, context.scoring_name, nil, 1)
+            return { message = 'Level Up!', colour = G.C.BLUE }
+        end
+        if context.individual and context.cardarea == G.play then
+            local target_card = context.other_card
+            local mult_val = 1
+            if b == 'bl_pillar' then mult_val = 1.5 end
+            if b == 'bl_club' and target_card:is_suit('Clubs') then mult_val = 2 end
+            if b == 'bl_goad' and target_card:is_suit('Spades') then mult_val = 2 end
+            if b == 'bl_head' and target_card:is_suit('Hearts') then mult_val = 2 end
+            if b == 'bl_window' and target_card:is_suit('Diamonds') then mult_val = 2 end
+            if b == 'bl_mark' and target_card:is_face() then mult_val = 2 end
+            if mult_val > 1 then return { x_mult = mult_val, card = card } end
+            if b == 'bl_tooth' then ease_dollars(2) end
+            if b == 'bl_hook' then G.hand:change_size(1) end
+        end
+
+        if context.joker_main then
+            if b == 'bl_flint' then return { mult_mod = (hand_chips or 0) * 2, chip_mod = (mult or 0) * 2, message = 'Triple Power!' } end
+            if b == 'bl_ox' and context.scoring_name == G.GAME.current_round.most_played_poker_hand then
+                ease_dollars(G.GAME.dollars); return { message = 'Double Money!' }
+            end
+        end
+
+        if context.after and b == 'bl_fish' then 
+            G.hand:change_size(1); card.ability.fish_count = (card.ability.fish_count or 0) + 1
+        end
+
+        if context.end_of_round then
+            if b == 'bl_hook' then G.hand:change_size(-1) end
+            if b == 'bl_manacle' then G.hand:change_size(-2) end
+            if b == 'bl_serpent' then G.hand:change_size(-3) end
+            if b == 'bl_fish' then G.hand:change_size(-(card.ability.fish_count or 0)) end 
+            card.ability.last_boss_key = nil
+            card.ability.boss_processed = nil
+            card.ability.fish_count = 0
+            card.ability.current_reversal = nil
+        end
+    end
 }
 SMODS.Joker {
     key = 'photochad',
@@ -1599,6 +1810,7 @@ SMODS.Joker {
     end,
     
     add_to_deck = function(self, card, from_debuff)
+        card:set_eternal(true)
         for k, v in pairs(G.GAME.hands) do
             v.level = 1
             v.played = 0
@@ -1628,9 +1840,9 @@ SMODS.Joker {
             if tet_card then
                 G.E_MANAGER:add_event(Event({
                     func = function()
+                        card:set_eternal(false)
                         tet_card:start_dissolve()
                         card:start_dissolve()
-                        
                         local new_card = create_card('Joker', G.jokers, nil, "DJ_soup", nil, nil, nil)
                         new_card:add_to_deck()
                         G.jokers:emplace(new_card)
@@ -1826,54 +2038,96 @@ SMODS.Joker {
         SMODS.set_scoring_calculation('multiply')
     end
 }
-function DJ_PENT(base, h)
-    if h == 1 then return base end
-    return DJ_TET(base, h + (base - 1))
-end
 SMODS.Joker {
     key = '2763_joker',
-    atlas = "place_atlas",
+    atlas = "2763_atlas",
+    display_size = {w = 95, h = 71},
     pos = { x = 0, y = 0 },
+        soul_pos = { 
+        x = 2, y = 0, 
+        extra = { x = 1, y = 0 }, 
+        draw = function(card, scale_mod, rotate_mod)     
+            if card.custom_extra_sprite then  
+                card.custom_extra_sprite.T.x, card.custom_extra_sprite.T.y = card.T.x, card.T.y  
+                card.custom_extra_sprite.scale = card.children.center.scale  
+                card.custom_extra_sprite:draw_shader('dissolve', 0, nil, nil, card.children.center, scale_mod*0.8, rotate_mod*0.8, nil, 0.1 + 0.03*math.sin(1.8*G.TIMERS.REAL), nil, 0.6)  
+                card.custom_extra_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, scale_mod*0.8, rotate_mod*0.8)  
+            end  
+            if card.children.floating_sprite then    
+                card.children.floating_sprite:draw_shader('dissolve', 0, nil, nil, card.children.center, scale_mod, rotate_mod, nil, 0.1 + 0.03*math.sin(1.8*G.TIMERS.REAL), nil, 0.6)    
+                card.children.floating_sprite:draw_shader('dissolve', nil, nil, nil, card.children.center, scale_mod, rotate_mod)    
+            end  
+        end  
+    },
+    set_sprites = function(self, card, front)     
+        if not card.custom_extra_sprite then     
+            card.custom_extra_sprite = Sprite(card.T.x, card.T.y, card.T.w, card.T.h, G.ASSET_ATLAS[self.atlas], self.soul_pos.extra)     
+            card.custom_extra_sprite.role.draw_major = card    
+            card.custom_extra_sprite.custom_draw = true     
+        end     
+    end,
     rarity = "DJ_soup", 
     discovered = true,
     cost = 2763,
     config = { 
         extra = { 
             t_pow = 1.0, 
-            t_grow = 0.02763
+            t_grow = 0.02763,
+            slot_gain = 1,
+            slot_locked = false
         } 
     },
     loc_txt = {
         name = "2763",
         text = {
-            "Gains {X:dark_edition,C:white}^^^#2#{} mult per triggered card.",
+            "Gains {X:dark_edition,C:white}^^^#2#{} power for every",
+            "empty {C:attention}Joker{} and {C:attention}Consumable{} slot",
+            "Gains {C:attention}+#3#{} Joker and Consumable Slot at end of round",
+            "{C:inactive,s:0.8}(Empty slots: {C:dark_edition,s:0.8}#4#{C:inactive,s:0.8})",
             "Currently: {X:dark_edition,C:white}^^^#1#{} Mult",
             "{C:inactive,s:0.8}BFDI REFERENCE NO WAY??"
         }
     },
     loc_vars = function(self, info_queue, card)
+        local total_empty = 0
+        if G.jokers and G.jokers.config and G.consumeables and G.consumeables.config then
+            local empty_j = math.max(0, G.jokers.config.card_limit - #G.jokers.cards)
+            local empty_c = math.max(0, G.consumeables.config.card_limit - #G.consumeables.cards)
+            total_empty = empty_j + empty_c
+        end
+
+        local current_display_pow = 1.0 + (total_empty * card.ability.extra.t_grow)
+        
         return { vars = { 
-            string.format("%.6f", card.ability.extra.t_pow),
-            string.format("%.6f", card.ability.extra.t_grow)
+            string.format("%.4f", current_display_pow),
+            string.format("%.4f", card.ability.extra.t_grow),
+            card.ability.extra.slot_gain,
+            total_empty
         } }
     end,
 
     calculate = function(self, card, context)
-        if context.cardarea == G.play and context.individual and not context.blueprint then
-            card.ability.extra.t_pow = card.ability.extra.t_pow + card.ability.extra.t_grow
-            return {
-                extra = { focus = card, message = "^^^" .. string.format("%.6f", card.ability.extra.t_pow) },
-                colour = G.C.DARK_EDITION
-            }
+        if context.setting_blind then
+            card.ability.extra.slot_locked = false
+        end
+        if context.end_of_round and not context.blueprint and not context.repetition then
+            if not card.ability.extra.slot_locked then
+                G.jokers.config.card_limit = G.jokers.config.card_limit + card.ability.extra.slot_gain
+                G.consumeables.config.card_limit = G.consumeables.config.card_limit + card.ability.extra.slot_gain
+                card.ability.extra.slot_locked = true
+                return { 
+                    message = "+1 Slot!", 
+                    colour = G.C.DARK_EDITION 
+                }
+            end
         end
         if context.joker_main then
-            local p = card.ability.extra.t_pow
-            mult = DJ_PENT(mult, p)
-            update_hand_text({delay = 0}, {chips = hand_chips, mult = mult})
+            local empty_joker_slots = math.max(0, G.jokers.config.card_limit - #G.jokers.cards)
+            local empty_consumable_slots = math.max(0, G.consumeables.config.card_limit - #G.consumeables.cards)
+            local current_t_pow = 1.0 + ((empty_joker_slots + empty_consumable_slots) * card.ability.extra.t_grow)  
             return {
-                message = "^^^" .. string.format("%.6f", p),
-                EEEmult_mod = 1,
-                hold = 0.5,
+                message = "^^^" .. string.format("%.4f", current_t_pow),
+                EEEmult_mod = current_t_pow,
                 colour = G.C.DARK_EDITION
             }
         end

@@ -17,12 +17,9 @@ SMODS.Blind {
     discovered = true,
     boss = {min = 1, max = 10},
     loc_vars = function(self)
-        return { vars = { 20 } }
+        return { vars = { 25 } }
     end,
-
-    boss_colour = HEX('ff3232'), -- this crashed cuz color and not colour WHY BRITIAN
-
-
+    boss_colour = HEX('ff3232'), 
     get_uibox_color = function(self)
         return HEX('ff3232')
     end,
@@ -33,7 +30,7 @@ SMODS.Blind {
         local has_modded = false
         if G.jokers and G.jokers.cards then
             for _, card in ipairs(G.jokers.cards) do
-                if card.config.center.mod then
+                if card.config.center.mod and card.config.center.key ~= 'j_DJ_chicot' then
                     has_modded = true
                     break
                 end
@@ -46,8 +43,12 @@ SMODS.Blind {
             play_sound('DJ_buzzer1_sound', 1, 0.8)
         end
     end,
+
     recalc_debuff = function(self, card, from_blind)
         if card.ability.set == 'Joker' and card.config.center.mod then
+            if card.config.center.key == 'j_DJ_chicot' then 
+                return false 
+            end
             return true
         end
     end

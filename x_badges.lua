@@ -111,6 +111,55 @@ SMODS.Achievement {
     end
 }
 SMODS.Achievement {
+    key = '2763', 
+    loc_txt = {
+        name = '2763',
+        description = {
+            "2763"
+        }
+    },
+    bypass_all_unlocked = true,
+    atlas = 'ach_atlas',
+    pos = { x = 1, y = 0 },
+    hidden_pos = { x = 0, y = 0 }, 
+    hidden_name = false, 
+    hidden_text = false,
+    
+    unlock_condition = function(self, args)
+        if G.jokers and G.jokers.cards then
+            for _, j in ipairs(G.jokers.cards) do
+                if j.config.center.key == 'j_DJ_2763_joker' then 
+                    return true 
+                end
+            end
+        end
+        return false
+    end
+}
+SMODS.Achievement {  
+    key = 'nuh_uh',   
+    loc_txt = {  
+        name = 'NUH UH',  
+        description = {  
+            "Force Chicot to reject",  
+            "The Plant boss blind."  
+        }  
+    },  
+    bypass_all_unlocked = true,  
+    atlas = 'ach_atlas',  
+    pos = { x = 1, y = 0 },   
+    hidden_pos = { x = 0, y = 0 },   
+    hidden_name = false,   
+    hidden_text = false,  
+      
+    unlock_condition = function(self, args)  
+        if args.chicot then  
+            return true  
+        end  
+        return false  
+    end  
+}
+SMODS.Achievement {
     key = 'the_fun_begins',
     loc_txt = {
         name = 'The fun begins',
@@ -137,15 +186,18 @@ SMODS.Achievement {
     return args.type == 'dj_eye_used'
     end
 }
-local update_unlock_ref = Game.update_check_for_unlock
+local original_unlock_function = Game.update_check_for_unlock
 function Game.update_check_for_unlock(self, args)
-    update_unlock_ref(self, args)
-    
+    if original_unlock_function then
+        original_unlock_function(self, args)
+    end
     local joker_achievements = {
         'infinite_photochad', 
         'the_man_himself', 
         'read_the_chat',
-        "fun"
+        'fun',
+        '2763',
+        'nuh_uh' 
     }
 
     for _, key in ipairs(joker_achievements) do
