@@ -161,6 +161,7 @@ SMODS.Sound { key = 'bruh_sound', path = 'bruh_sound.mp3' }
 SMODS.Sound { key = 'balala_sound', path = 'balala.ogg' }
 SMODS.Sound { key = "static_sound", path = "static.ogg"}
 SMODS.Sound { key = "life_sound", path = "life.mp3"}
+SMODS.Sound { key = "sonic_sound", path = "sonic.mp3"}
 SMODS.Sound {  
     key = 'sr_music',  
     path = 'sr.ogg',  
@@ -421,6 +422,7 @@ SMODS.Atlas { key = "deck_atlas", path = "deck.png", px = 71, py = 95}
 SMODS.Atlas { key = "khalid_atlas", path = "khalid.png", px = 71, py = 95}
 SMODS.Atlas { key = "khalid2_atlas", path = "khalid2.png", px = 71, py = 95}
 SMODS.Atlas { key = "blind_atlas", path = "blind.png", px = 34, py = 34}
+SMODS.Atlas { key = "blind1_atlas", path = "blind1.png", px = 33, py = 33}
 SMODS.Atlas { key = "khaled_atlas", path = "kalidv.png", px = 59, py = 93}
 SMODS.Atlas { key = "tags_atlas", path = "tags.png", px = 34, py = 34}
 SMODS.Atlas { key = "cryb_atlas", path = "cryb.png", px = 71, py = 95}

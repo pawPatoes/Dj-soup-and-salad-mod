@@ -1368,14 +1368,15 @@ SMODS.Joker {
         }
     },
 
+    set_ability = function(self, card, initial, delay_sprites)
+        card.ability.extra = { h_size = 0, fish_count = 0 }
+    end,
+
     loc_vars = function(self, info_queue, card)
         local status = card.ability.current_reversal or "Searching..."
-        local heart_targets = card.ability.heart_card_list or ""
-        local colour = G.C.GREEN
-        if not card.ability.current_reversal then colour = G.C.UI.TEXT_INACTIVE end
-
+        local colour = card.ability.current_reversal and G.C.GREEN or G.C.UI.TEXT_INACTIVE
         return {  
-            vars = { status, heart_targets },  
+            vars = { status, "" },  
             main_end = {  
                 {n=G.UIT.R, config={align="cm"}, nodes={  
                     {n=G.UIT.R, config={align="cm", colour = colour, r = 0.1, minw = 1.8, minh = 0.3, emboss = 0.05, padding = 0.03}, nodes={  
@@ -1387,129 +1388,113 @@ SMODS.Joker {
     end,
 
     add_to_deck = function(self, card, from_debuff)
-        if G.GAME and G.GAME.used_jokers then G.GAME.used_jokers['j_chicot'] = true end
+        if G.GAME then G.GAME.used_jokers = G.GAME.used_jokers or {}; G.GAME.used_jokers['j_chicot'] = true end
     end,
 
     remove_from_deck = function(self, card, from_debuff)
-        local b = card.ability.last_boss_key
-        if b == 'bl_manacle' then G.hand:change_size(-2) end
-        if b == 'bl_serpent' then G.hand:change_size(-3) end
-        if b == 'bl_fish' then G.hand:change_size(-(card.ability.fish_count or 0)) end
+        if G.hand then G.hand:change_size(-card.ability.extra.h_size) end
+        card.ability.extra.h_size = 0
         if G.GAME and G.GAME.used_jokers then G.GAME.used_jokers['j_chicot'] = nil end
-        card.ability.last_boss_key = nil
-        card.ability.boss_processed = nil
     end,
 
     update = function(self, card)
-        if G.STAGE == G.STAGES.RUN and G.GAME.used_jokers then G.GAME.used_jokers['j_chicot'] = true end
+        if G.STAGE ~= G.STAGES.RUN or not (card.area == G.jokers) or 
+           not G.GAME.blind or not G.GAME.blind.boss then 
+            return 
+        end
 
-        if G.STAGE == G.STAGES.RUN and G.GAME.blind and G.GAME.blind.boss and not card.debuff then
-            local boss = G.GAME.blind
+        local boss = G.GAME.blind
+        if not boss.disabled and not card.ability.boss_processed then
             local b = boss.config.blind.key
+            card.ability.last_boss_key = b
             
-            if not boss.disabled and not card.ability.boss_processed then
-                card.ability.last_boss_key = b
-                card.ability.fish_count = 0
-                
-                local effects = {
-                    bl_club = "Club X2", bl_goad = "Spade X2",
-                    bl_head = "Heart X2", bl_window = "Diamond X2",
-                    bl_plant = "REJECTED", bl_mark = "Face Card X2",
-                    bl_final_leaf = "All Cards X2", bl_pillar = "All Cards X1.5",
-                    bl_manacle = "+2 Hand Size", bl_water = "Double Discards",
-                    bl_needle = "+2 Hands", bl_wall = "Half Blind Size",
-                    bl_vessel = "Half Blind Size", bl_flint = "Triple Power",
-                    bl_arm = "Double Level Up", bl_tooth = "Earn $2 per Card",
-                    bl_ox = "Double Money", bl_psychic = "X5 (5 cards)",
-                    bl_eye = "X10 (Repeats)", bl_mouth = "X10 (One Type)",
-                    bl_heart = "X5 Random Joker", bl_anchor = "Negative Jokers",
-                    bl_bell = "Gold cards", bl_serpent = "+3 Hand Size",
-                    bl_hook = "+1 Hand Size", bl_house = "First Hand X2.5",
-                    bl_wheel = "1/7 Chance X2", bl_fish = "+1 Hand Size/Play",
-                    bl_final_bell = "Forced Gold Card", bl_final_acorn = "Temp Polychrome",
-                    bl_final_heart = "5 Cards X5 Mult", bl_DJ_no_mods = "Modded Polychrome"
-                }
-                card.ability.current_reversal = effects[b] or "Modded blind/unaccounted for"
-                if b == 'bl_manacle' then G.hand:change_size(2) end
-                if b == 'bl_serpent' then G.hand:change_size(3) end
-                if b == 'bl_water' then ease_discard((G.GAME.starting_params.discards or 3) * 2) end
-                if b == 'bl_needle' then ease_hands_played(2) end
-                if b == 'bl_wall' or b == 'bl_vessel' or b == 'bl_final_leaf' then 
-                    boss.chips = boss.chips / 2; boss.chip_text = number_format(boss.chips)
-                end
-                if b == 'bl_arm' and G.GAME.last_hand_playing then
-                    level_up_hand(card, G.GAME.last_hand_playing, nil, 1)
-                end
-                if (b == 'bl_DJ_no_mods' or b == 'bl_final_acorn') and G.jokers and G.jokers.cards then
-                    for _, j in ipairs(G.jokers.cards) do
-                        if j.config.center.key ~= 'j_DJ_chicot' and not j.edition then
-                            j:set_edition({polychrome = true}, true)
-                            j.temp_chicot_poly = true
-                        end
-                    end
-                end
-                G.E_MANAGER:add_event(Event({
-                    func = function()
-                        play_sound('DJ_buzzer_sound', 1, 0.4)
-                        card_eval_status_text(card, 'extra', nil, nil, nil, {message = "Boss Reversed!", colour = G.C.GREEN})
-                        return true
-                    end
-                }))
+            G.hand:change_size(-card.ability.extra.h_size)
+            card.ability.extra.h_size = 0
+            
+            local effects = {
+                bl_club = "Club X2", bl_goad = "Spade X2", bl_head = "Heart X2", bl_window = "Diamond X2",
+                bl_mark = "Face Card X2", bl_final_leaf = "Half Blind Size", bl_pillar = "All Cards X1.5",
+                bl_manacle = "+2 Hand Size", bl_water = "Double Discards", bl_needle = "+2 Hands",
+                bl_wall = "Half Blind Size", bl_vessel = "Half Blind Size", bl_flint = "Triple Power",
+                bl_arm = "Double Level Up", bl_tooth = "Earn $2 per Card", bl_ox = "Double Money",
+                bl_psychic = "X5 (5 cards)", bl_eye = "X10 (Repeats)", bl_mouth = "X10 (One Type)",
+                bl_anchor = "Negative Jokers", bl_bell = "Gold cards", bl_serpent = "+5 Hand Size",
+                bl_hook = "+1 Hand Size", bl_house = "First Hand X2.5", bl_wheel = "1/7 Chance X2",
+                bl_fish = "+1 Hand Size/Play", bl_final_bell = "Forced Gold Card", 
+                bl_final_acorn = "Temp Polychrome", bl_final_heart = "5 Cards X5 Mult", 
+                bl_DJ_sell_jokers = "Score Limit Removed"
+            }
 
-                boss:disable()
-                card.ability.boss_processed = true
+            card.ability.current_reversal = effects[b] or "Modded blind/Unaccounted for"
+
+            if b == 'bl_manacle' then card.ability.extra.h_size = 2; G.hand:change_size(2) end
+            if b == 'bl_serpent' then card.ability.extra.h_size = 5; G.hand:change_size(5) end
+            if b == 'bl_water' then ease_discard(G.GAME.round_resets.discards, nil, true) end
+            if b == 'bl_needle' then ease_hands_played(2) end
+            if b == 'bl_wall' or b == 'bl_vessel' or b == 'bl_final_leaf' then 
+                boss.chips = boss.chips / 2; boss.chip_text = number_format(boss.chips)
             end
-            if boss.active then
-                for _, area in ipairs({G.play, G.hand, G.jokers}) do
-                    if area and area.cards then
-                        for _, v in ipairs(area.cards) do
-                            v.debuff = false; v:set_debuff(false)
-                        end
-                    end
+            if b == 'bl_anchor' then 
+                for i = 1, #G.jokers.cards do G.jokers.cards[i]:set_edition({negative = true}, true) end
+            end
+
+            G.E_MANAGER:add_event(Event({
+                func = function()
+                    play_sound('DJ_buzzer_sound', 1, 0.4)
+                    card_eval_status_text(card, 'extra', nil, nil, nil, {message = "Boss Reversed!", colour = G.C.GREEN})
+                    return true
                 end
-            end
+            }))
+            boss:disable()
+            card.ability.boss_processed = true
         end
     end,
 
     calculate = function(self, card, context)
-        local b = card.ability.last_boss_key or (G.GAME.blind and G.GAME.blind.config.blind.key)
-        if context.after and b == 'bl_arm' then
-            level_up_hand(card, context.scoring_name, nil, 1)
-            return { message = 'Level Up!', colour = G.C.BLUE }
-        end
+        local b = card.ability.last_boss_key
+        
         if context.individual and context.cardarea == G.play then
-            local target_card = context.other_card
-            local mult_val = 1
-            if b == 'bl_pillar' then mult_val = 1.5 end
-            if b == 'bl_club' and target_card:is_suit('Clubs') then mult_val = 2 end
-            if b == 'bl_goad' and target_card:is_suit('Spades') then mult_val = 2 end
-            if b == 'bl_head' and target_card:is_suit('Hearts') then mult_val = 2 end
-            if b == 'bl_window' and target_card:is_suit('Diamonds') then mult_val = 2 end
-            if b == 'bl_mark' and target_card:is_face() then mult_val = 2 end
-            if mult_val > 1 then return { x_mult = mult_val, card = card } end
+            local target = context.other_card
+            if b == 'bl_pillar' then return { x_mult = 1.5, card = card } end
+            if b == 'bl_club' and target:is_suit('Clubs') then return { x_mult = 2, card = card } end
+            if b == 'bl_goad' and target:is_suit('Spades') then return { x_mult = 2, card = card } end
+            if b == 'bl_head' and target:is_suit('Hearts') then return { x_mult = 2, card = card } end
+            if b == 'bl_window' and target:is_suit('Diamonds') then return { x_mult = 2, card = card } end
+            if b == 'bl_mark' and target:is_face() then return { x_mult = 2, card = card } end
             if b == 'bl_tooth' then ease_dollars(2) end
-            if b == 'bl_hook' then G.hand:change_size(1) end
+            if b == 'bl_bell' or b == 'bl_final_bell' then target:set_ability(G.P_CENTERS.m_gold) end
         end
 
         if context.joker_main then
-            if b == 'bl_flint' then return { mult_mod = (hand_chips or 0) * 2, chip_mod = (mult or 0) * 2, message = 'Triple Power!' } end
+            if b == 'bl_flint' then 
+                return { mult_mod = (hand_chips or 0) * 2, chip_mod = (mult or 0) * 2, message = 'Triple Power!' } 
+            end
             if b == 'bl_ox' and context.scoring_name == G.GAME.current_round.most_played_poker_hand then
-                ease_dollars(G.GAME.dollars); return { message = 'Double Money!' }
+                ease_dollars(to_number(G.GAME.dollars)); return { message = 'Double Money!' }
+            end
+            if b == 'bl_psychic' and #context.full_hand == 5 then return { x_mult = 5, card = card } end
+            if b == 'bl_eye' and G.GAME.hands[context.scoring_name].played > 0 then return { x_mult = 10, card = card } end
+            if b == 'bl_mouth' and G.GAME.current_round.hands_played > 0 and G.GAME.current_round.most_played_poker_hand == context.scoring_name then return { x_mult = 10, card = card } end
+            if b == 'bl_house' and G.GAME.current_round.hands_played == 0 then return { x_mult = 2.5, card = card } end
+            if b == 'bl_wheel' and pseudorandom('wheel_chicot') < 0.1428 then return { x_mult = 2, card = card } end
+            if b == 'bl_final_heart' and #context.full_hand == 5 then return { x_mult = 5, card = card } end
+        end
+
+        if context.after and not context.blueprint then
+            if b == 'bl_fish' or b == 'bl_hook' then 
+                G.hand:change_size(1); card.ability.extra.h_size = card.ability.extra.h_size + 1
+            end
+            if b == 'bl_arm' then
+                level_up_hand(card, context.scoring_name, nil, 1)
+                return { message = 'Level Up!', colour = G.C.BLUE }
             end
         end
 
-        if context.after and b == 'bl_fish' then 
-            G.hand:change_size(1); card.ability.fish_count = (card.ability.fish_count or 0) + 1
-        end
-
-        if context.end_of_round then
-            if b == 'bl_hook' then G.hand:change_size(-1) end
-            if b == 'bl_manacle' then G.hand:change_size(-2) end
-            if b == 'bl_serpent' then G.hand:change_size(-3) end
-            if b == 'bl_fish' then G.hand:change_size(-(card.ability.fish_count or 0)) end 
-            card.ability.last_boss_key = nil
+        if context.end_of_round and not context.blueprint and not context.repetition then
+            G.hand:change_size(-card.ability.extra.h_size)
+            card.ability.extra.h_size = 0
             card.ability.boss_processed = nil
-            card.ability.fish_count = 0
+            card.ability.last_boss_key = nil
             card.ability.current_reversal = nil
         end
     end
